@@ -1,197 +1,244 @@
-'use client';
+'use client'
 
-import { useEffect, useState, useRef, createRef } from 'react';
-import dynamic from 'next/dynamic';
+import React, { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
+import { Plus, Settings, Save, Trash2, Camera, X } from 'lucide-react'
 
-const Cropper = dynamic(() => import('react-cropper').then(m => m.default), { 
-  ssr: false,
-  loading: () => <div className="h-64 w-full bg-zinc-100 animate-pulse flex items-center justify-center text-zinc-400 font-light tracking-widest text-[10px]">PREPARANDO ATELIER...</div>
-});
+// Configuração do Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export default function MabellenOfficial() {
-  const [products, setProducts] = useState([
-    { id: 1, name: 'CONJUNTO NOIR SEDUCTION', gender: 'FEMININO', subcat: 'CONJUNTO', price: '189,90', image: 'https://images.unsplash.com/photo-1582533561751-ef6f6ab93a2e?q=80&w=800', isNew: true }
-  ]);
+interface Produto {
+  id?: string
+  nome: string
+  preco: string
+  categoria: string
+  imagem: string
+}
 
-  const [adminMode, setAdminMode] = useState(false);
-  const [activeGender, setActiveGender] = useState('FEMININO');
-  const [activeSubcat, setActiveSubcat] = useState('TODOS');
-  const [croppingImage, setCroppingImage] = useState<string | null>(null);
-  const [activeId, setActiveId] = useState<number | null>(null);
-  
-  const cropperRef = createRef<any>();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const WHATSAPP_LINK = "554499651205";
+export default function MabellenApp() {
+  const [produtos, setProdutos] = useState<Produto[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
+  const [senha, setSenha] = useState('')
+  const [filtro, setFiltro] = useState('TODOS')
+  const [genero, setGenero] = useState<'FEMININO' | 'MASCULINO'>('FEMININO')
+  const [editando, setEditando] = useState<Produto | null>(null)
 
-  const catsFeminino = ['TODOS', 'CALCINHA', 'SUTIÃ', 'CONJUNTO', 'PIJAMAS', 'CAMISETAS', 'CALÇAS LEG', 'MEIAS'];
-  const catsMasculino = ['TODOS', 'CUECAS', 'PIJAMAS', 'CAMISETAS', 'CALÇAS', 'MEIAS'];
+  // Carregar produtos do Banco de Dados (Supabase)
+  const carregarProdutos = async () => {
+    const { data, error } = await supabase
+      .from('produtos')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (data) setProdutos(data)
+  }
 
   useEffect(() => {
-    const saved = localStorage.getItem('mabellen_official_data');
-    if (saved) setProducts(JSON.parse(saved));
-  }, []);
+    carregarProdutos()
+  }, [])
 
-  const ligarAdmin = () => {
-    const senha = prompt("Acesso Administrativo:");
-    if (senha === "2004") setAdminMode(!adminMode);
-  };
-
-  const saveAll = () => {
-    localStorage.setItem('mabellen_official_data', JSON.stringify(products));
-    alert('Site Publicado! ✨');
-  };
-
-  const addProduct = () => {
-    const newId = Date.now();
-    const newItem = {
-      id: newId,
-      name: 'NOME DO PRODUTO',
-      gender: activeGender,
-      subcat: activeSubcat === 'TODOS' ? (activeGender === 'FEMININO' ? 'CONJUNTO' : 'CUECAS') : activeSubcat,
-      price: '0,00',
-      image: 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?q=80&w=800',
-      isNew: true
-    };
-    setProducts([newItem, ...products]);
-  };
-
-  const finalizeCrop = () => {
-    const cropper = cropperRef.current?.cropper;
-    if (cropper && activeId) {
-      const result = cropper.getCroppedCanvas({ width: 1200, height: 1500 }).toDataURL('image/jpeg', 0.9);
-      setProducts(products.map(p => p.id === activeId ? { ...p, image: result } : p));
-      setCroppingImage(null);
-      setActiveId(null);
+  const handleLogin = () => {
+    if (senha === '2004') {
+      setIsAdmin(true)
+      setShowAdminLogin(false)
+      setSenha('')
+    } else {
+      alert('Senha incorreta!')
     }
-  };
+  }
 
-  const filteredProducts = products.filter(p => {
-    const matchGender = p.gender === activeGender;
-    const matchSub = activeSubcat === 'TODOS' || p.subcat === activeSubcat;
-    return matchGender && matchSub;
-  });
+  const salvarProduto = async (p: Produto) => {
+    if (p.id) {
+      await supabase.from('produtos').update(p).eq('id', p.id)
+    } else {
+      await supabase.from('produtos').insert([p])
+    }
+    setEditando(null)
+    carregarProdutos()
+  }
 
-  // Componente de Logo Padronizado para reuso no Topo e Rodapé
-  const LogoMabellen = ({ size = "text-xl md:text-3xl" }) => (
-    <div className="flex flex-col items-center">
-      <h1 className={`${size} font-serif tracking-[0.4em] uppercase text-white leading-none`}>
-        Mabe<span className="text-[#C9A96E]">llen</span>
-      </h1>
-      <p className="text-[7px] md:text-[9px] tracking-[0.3em] uppercase text-[#C9A96E] mt-1 font-medium">
-        MODA INTIMA FEMININA E MASCULINA
-      </p>
-    </div>
-  );
+  const excluirProduto = async (id: string) => {
+    if (confirm('Deseja excluir este item?')) {
+      await supabase.from('produtos').delete().eq('id', id)
+      carregarProdutos()
+    }
+  }
+
+  const categorias = genero === 'FEMININO' 
+    ? ['TODOS', 'CALCINHA', 'SUTIÃ', 'CONJUNTO', 'PIJAMAS', 'CAMISETAS', 'CALÇAS LEG', 'MEIAS']
+    : ['TODOS', 'CUECAS', 'PIJAMAS', 'MEIAS', 'CAMISETAS']
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#111] antialiased">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
-      
-      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = () => setCroppingImage(reader.result as string);
-          reader.readAsDataURL(file);
-        }
-        e.target.value = '';
-      }} />
-
-      {/* EDITOR DE FOTOS */}
-      {croppingImage && (
-        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl">
-            <div className="p-4 flex justify-between items-center border-b">
-              <span className="text-sm font-bold uppercase tracking-tighter">Enquadrar Peça</span>
-              <button onClick={finalizeCrop} className="bg-[#C9A96E] text-white px-6 py-2 rounded-full text-[10px] font-bold uppercase">Confirmar</button>
-            </div>
-            <Cropper ref={cropperRef} src={croppingImage} style={{ height: 400, width: "100%" }} aspectRatio={4/5} viewMode={1} guides={true} />
-          </div>
-        </div>
-      )}
-
-      {/* HEADER */}
-      <header className="bg-[#111] py-6 md:py-8 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
-        <LogoMabellen />
-
-        <div className="flex gap-2 md:gap-4 items-center">
-          <button onClick={ligarAdmin} className="w-8 h-8 flex items-center justify-center text-white/20 text-[10px] hover:text-white transition-colors">{adminMode ? '✕' : '⚙'}</button>
-          {adminMode && (
-            <div className="flex gap-2">
-               <button onClick={addProduct} className="bg-white text-black text-[9px] md:text-[10px] font-bold px-4 py-2 rounded-full uppercase italic">+ NOVO</button>
-               <button onClick={saveAll} className="bg-[#C9A96E] text-white text-[9px] md:text-[10px] font-bold px-4 py-2 rounded-full uppercase shadow-lg">SALVAR</button>
-            </div>
-          )}
-        </div>
+    <div className="min-h-screen bg-white text-gray-900 font-sans pb-20">
+      {/* Header Luxo */}
+      <header className="py-8 px-4 text-center bg-black text-[#D4AF37] border-b border-[#D4AF37]/30 sticky top-0 z-40">
+        <h1 className="text-4xl font-light tracking-[0.3em] mb-1">M A B E L L E N</h1>
+        <p className="text-[10px] uppercase tracking-[0.2em] opacity-80">Moda Íntima Feminina e Masculina</p>
+        
+        <button 
+          onClick={() => setShowAdminLogin(true)}
+          className="absolute right-4 top-10 opacity-30 hover:opacity-100"
+        >
+          <Settings size={20} />
+        </button>
       </header>
 
-      {/* NAV FILTROS */}
-      <nav className="bg-white/95 backdrop-blur-md border-b border-zinc-100 sticky top-[70px] md:top-[100px] z-40">
-        <div className="flex justify-center gap-8 md:gap-16 py-4 border-b border-zinc-50">
-          {['FEMININO', 'MASCULINO'].map(g => (
-            <button key={g} onClick={() => { setActiveGender(g); setActiveSubcat('TODOS'); }} className={`text-[10px] md:text-[12px] font-bold tracking-[0.3em] uppercase transition-all ${activeGender === g ? 'text-[#C9A96E] border-b border-[#C9A96E]' : 'text-zinc-300'}`}>{g}</button>
-          ))}
-        </div>
-        <div className="flex justify-start md:justify-center gap-3 py-3 overflow-x-auto px-6 no-scrollbar">
-          {(activeGender === 'FEMININO' ? catsFeminino : catsMasculino).map(s => (
-            <button key={s} onClick={() => setActiveSubcat(s)} className={`text-[8px] md:text-[9px] px-4 py-2 rounded-full whitespace-nowrap uppercase tracking-widest transition-all ${activeSubcat === s ? 'bg-[#111] text-white' : 'bg-zinc-100 text-zinc-500'}`}>{s}</button>
-          ))}
-        </div>
-      </nav>
+      {/* Seletor de Gênero */}
+      <div className="flex justify-center gap-8 py-6 text-sm tracking-widest font-medium border-b border-gray-100">
+        <button 
+          onClick={() => { setGenero('FEMININO'); setFiltro('TODOS'); }}
+          className={genero === 'FEMININO' ? "text-[#D4AF37] border-b border-[#D4AF37]" : "text-gray-400"}
+        >
+          FEMININO
+        </button>
+        <button 
+          onClick={() => { setGenero('MASCULINO'); setFiltro('TODOS'); }}
+          className={genero === 'MASCULINO' ? "text-[#D4AF37] border-b border-[#D4AF37]" : "text-gray-400"}
+        >
+          MASCULINO
+        </button>
+      </div>
 
-      {/* VITRINE */}
-      <main className="p-6 md:p-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 md:gap-y-20 max-w-7xl mx-auto">
-        {filteredProducts.map(p => (
-          <div key={p.id} className="group flex flex-col relative animate-fadeIn">
-            {adminMode && (
-              <button onClick={() => {if(confirm("Excluir item?")) setProducts(products.filter(i => i.id !== p.id))}} className="absolute -top-2 -right-2 z-20 bg-red-600 text-white w-7 h-7 rounded-full shadow-xl font-bold text-xs">✕</button>
-            )}
-            
-            <div 
-              onClick={() => adminMode && (setActiveId(p.id), fileInputRef.current?.click())}
-              className={`w-full aspect-[4/5] relative overflow-hidden bg-zinc-100 rounded-[2.5rem] shadow-sm ${adminMode ? 'cursor-pointer hover:ring-2 ring-[#C9A96E]' : ''}`}
-            >
-              {p.isNew && <div className="absolute top-4 left-4 z-10 bg-white/90 px-3 py-1 rounded-full shadow-sm"><span className="text-[7px] font-bold uppercase tracking-widest">New Collection</span></div>}
-              <img src={p.image} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Mabellen" />
-              {adminMode && <div className="absolute inset-0 bg-black/30 flex items-center justify-center"><span className="bg-white text-[8px] font-bold px-4 py-2 rounded-full uppercase shadow-xl">Alterar Foto</span></div>}
-            </div>
-            
-            <div className="mt-6 text-center space-y-2">
-              <input className={`text-[9px] tracking-[0.2em] font-bold text-[#C9A96E] bg-transparent text-center outline-none w-full ${adminMode ? 'border-b border-zinc-200' : 'pointer-events-none'}`} value={p.subcat} onChange={(e) => setProducts(products.map(i => i.id === p.id ? {...i, subcat: e.target.value.toUpperCase()} : i))} />
-              <input className={`font-serif text-xl md:text-2xl italic bg-transparent text-center outline-none w-full text-zinc-800 ${adminMode ? 'border-b border-zinc-200' : 'pointer-events-none'}`} value={p.name} onChange={(e) => setProducts(products.map(i => i.id === p.id ? {...i, name: e.target.value} : i))} />
-              <div className="flex justify-center items-center gap-1 font-bold">
-                <span className="text-[9px] text-zinc-400">R$</span>
-                <input className={`bg-transparent text-center outline-none w-20 text-lg ${adminMode ? 'border-b border-zinc-200' : 'pointer-events-none'}`} value={p.price} onChange={(e) => setProducts(products.map(i => i.id === p.id ? {...i, price: e.target.value} : i))} />
-              </div>
+      {/* Filtros de Categoria */}
+      <div className="flex overflow-x-auto gap-2 p-4 no-scrollbar">
+        {categorias.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setFiltro(cat)}
+            className={`px-4 py-1.5 rounded-full text-[10px] whitespace-nowrap transition-all border ${
+              filtro === cat ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Grid de Produtos */}
+      <div className="grid grid-cols-2 gap-4 p-4">
+        {produtos
+          .filter(p => (filtro === 'TODOS' || p.categoria === filtro))
+          .map((prod) => (
+          <div key={prod.id} className="relative group animate-in fade-in duration-500">
+            <div className="aspect-[3/4] bg-gray-100 rounded-2xl overflow-hidden mb-2 relative">
+              <img src={prod.imagem} alt={prod.nome} className="w-full h-full object-cover" />
+              <div className="absolute top-2 left-2 bg-white/90 px-2 py-1 rounded-md text-[8px] font-bold uppercase tracking-tighter">New Collection</div>
               
-              {!adminMode && (
-                <button 
-                  onClick={() => window.open(`https://wa.me/${WHATSAPP_LINK}?text=Olá! Gostaria de encomendar o produto: ${p.name}`)}
-                  className="mt-4 bg-[#111] text-white text-[9px] font-bold px-10 py-4 rounded-2xl uppercase tracking-widest hover:bg-[#C9A96E] transition-all shadow-md active:scale-95"
-                >
-                  Encomendar
-                </button>
+              {isAdmin && (
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button onClick={() => excluirProduto(prod.id!)} className="bg-red-500 text-white p-2 rounded-full shadow-lg"><Trash2 size={14}/></button>
+                </div>
               )}
             </div>
+            <h3 className="text-[11px] font-medium uppercase tracking-tight text-gray-600 px-1">{prod.nome}</h3>
+            <p className="text-sm font-semibold px-1">R$ {prod.preco}</p>
           </div>
         ))}
-      </main>
+      </div>
 
-      {/* FOOTER PADRONIZADO COM O TOPO */}
-      <footer className="bg-[#111] py-20 text-center mt-20">
-        <LogoMabellen size="text-xl md:text-2xl" />
-        <p className="text-[7px] tracking-[0.4em] text-zinc-600 uppercase italic mt-6">Peças Exclusivas • Maringá - PR</p>
-      </footer>
-
-      {!adminMode && (
+      {/* Botão Flutuante Admin */}
+      {isAdmin && (
         <button 
-          onClick={() => window.open(`https://wa.me/${WHATSAPP_LINK}`)}
-          className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform active:scale-90"
+          onClick={() => setEditando({ nome: '', preco: '', categoria: filtro === 'TODOS' ? categorias[1] : filtro, imagem: '' })}
+          className="fixed bottom-6 right-6 bg-black text-[#D4AF37] p-4 rounded-full shadow-2xl z-50 animate-bounce"
         >
-          <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.499-5.688-1.447l-6.305 1.65zm6.357-3.64l.351.208c1.512.896 3.255 1.369 5.053 1.37h.005c5.448 0 9.881-4.433 9.884-9.884.002-2.641-1.029-5.124-2.898-7.001-1.875-1.877-4.363-2.91-7.01-2.91-5.449 0-9.883 4.433-9.886 9.884-.001 1.93.56 3.814 1.621 5.412l.23.348-.992 3.619 3.714-.974z"/></svg>
+          <Plus size={28} />
         </button>
       )}
+
+      {/* Modal de Login Admin */}
+      {showAdminLogin && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-6 z-[60] backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-3xl w-full max-w-sm text-center">
+            <h2 className="text-xl font-bold mb-4">Acesso Restrito</h2>
+            <input 
+              type="password" 
+              placeholder="Digite a senha..."
+              className="w-full p-4 border rounded-xl mb-4 text-center text-2xl tracking-widest"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowAdminLogin(false)} className="flex-1 p-4 text-gray-500 font-medium">Cancelar</button>
+              <button onClick={handleLogin} className="flex-1 bg-black text-white p-4 rounded-xl font-bold">Entrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Cadastro de Produto */}
+      {editando && (
+        <div className="fixed inset-0 bg-white z-[70] p-6 overflow-y-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold">Novo Produto</h2>
+            <button onClick={() => setEditando(null)}><X size={24}/></button>
+          </div>
+
+          <div className="space-y-6">
+            <div className="aspect-[3/4] bg-gray-100 rounded-3xl flex flex-col items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden relative">
+              {editando.imagem ? (
+                <img src={editando.imagem} className="w-full h-full object-cover" />
+              ) : (
+                <>
+                  <Camera size={48} className="text-gray-400 mb-2" />
+                  <p className="text-xs text-gray-500">Tire uma foto ou cole a URL</p>
+                </>
+              )}
+              <input 
+                type="text" 
+                placeholder="URL da Imagem"
+                className="absolute bottom-4 left-4 right-4 p-2 bg-white/90 rounded-lg text-xs"
+                value={editando.imagem}
+                onChange={(e) => setEditando({...editando, imagem: e.target.value})}
+              />
+            </div>
+
+            <input 
+              type="text" 
+              placeholder="Nome do Produto (Ex: Conjunto Noir)"
+              className="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-black"
+              value={editando.nome}
+              onChange={(e) => setEditando({...editando, nome: e.target.value})}
+            />
+
+            <input 
+              type="text" 
+              placeholder="Preço (Ex: 89,90)"
+              className="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-black"
+              value={editando.preco}
+              onChange={(e) => setEditando({...editando, preco: e.target.value})}
+            />
+
+            <select 
+              className="w-full p-4 bg-gray-50 rounded-2xl border-none"
+              value={editando.categoria}
+              onChange={(e) => setEditando({...editando, categoria: e.target.value})}
+            >
+              {categorias.filter(c => c !== 'TODOS').map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            <button 
+              onClick={() => salvarProduto(editando)}
+              className="w-full bg-black text-[#D4AF37] p-5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl"
+            >
+              <Save size={20}/> SALVAR NO CATÁLOGO
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Rodapé fixo WhatsApp */}
+      <a 
+        href="https://wa.me/5544999999999" 
+        className="fixed bottom-6 left-6 right-6 bg-[#25D366] text-white py-4 rounded-2xl flex items-center justify-center gap-3 font-bold shadow-2xl z-40"
+      >
+        ENVIAR PEDIDO VIA WHATSAPP
+      </a>
     </div>
-  );
+  )
 }
