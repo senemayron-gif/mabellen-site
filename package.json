@@ -1,52 +1,141 @@
-// Removidos os imports do Cropper que causavam erro
-import { useState, useEffect } from 'react';
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import { 
-  ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, 
-  MessageCircle, Upload, Plus, ChevronRight, Star 
-} from 'lucide-react';
-import { createClient } from '@supabase/supabase-base';
+  ShoppingBag, X, Send, Trash2, Settings, Menu, 
+  MessageCircle, UploadCloud, Plus, Star, Sparkles 
+} from 'lucide-react'
 
-// ... (mantenha sua configuração do supabase aqui)
+// Substitua pelas suas chaves do Supabase que já funcionavam antes
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-export default function MabellenStore() {
-  // ... (mantenha seus estados aqui)
+export default function MabellenApp() {
+  const [produtos, setProdutos] = useState<any[]>([])
+  const [abaGeral, setAbaGeral] = useState<'FEMININO' | 'MASCULINO'>('FEMININO')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [novoProd, setNovoProd] = useState({ 
+    nome: '', preco: '', fotos: [] as string[], genero: 'FEMININO', tamanhos_disponiveis: 'P, M, G' 
+  })
+
+  useEffect(() => {
+    const carregar = async () => {
+      const { data } = await supabase.from('produtos').select('*').order('created_at', { ascending: false })
+      if (data) setProdutos(data)
+    }
+    carregar()
+  }, [])
+
+  const aoSubirFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      const nomeArquivo = `${Date.now()}-${file.name}`
+      const { data } = await supabase.storage.from('fotos-produtos').upload(nomeArquivo, file)
+      if (data) {
+        const { data: { publicUrl } } = supabase.storage.from('fotos-produtos').getPublicUrl(data.path)
+        setNovoProd(prev => ({ ...prev, fotos: [...prev.fotos, publicUrl] }))
+      }
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-white font-sans text-black">
-      {/* SEÇÃO DESTAQUE MABELLEN - DESIGN MELHORADO */}
-      <header className="py-12 px-4 text-center bg-gradient-to-b from-gray-50 to-white">
-        <h1 className="text-5xl md:text-7xl font-black tracking-tighter italic mb-4">
-          MABELLEN <span className="text-yellow-500 text-3xl md:text-5xl block md:inline ml-2">STORE</span>
-        </h1>
-        
-        <div className="flex items-center justify-center gap-4 mb-8 text-gray-400 font-bold tracking-widest text-xs uppercase">
-          <span>Feminina</span>
-          <div className="w-1 h-1 bg-black rounded-full"></div>
-          <span>Masculina</span>
+    <div className="min-h-screen bg-white pb-24 text-black">
+      
+      {/* DESTAQUE MABELLEN STORE - ESTILO GRIFE */}
+      <div className="bg-black text-white pt-20 pb-24 px-6 text-center relative">
+        <div className="relative z-10">
+          <Sparkles className="text-yellow-500 mx-auto mb-4 animate-pulse" size={30} />
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter italic leading-none">
+            MABELLEN
+          </h1>
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <div className="h-[1px] w-10 bg-yellow-600"></div>
+            <span className="text-yellow-500 tracking-[0.6em] font-light text-xl">STORE</span>
+            <div className="h-[1px] w-10 bg-yellow-600"></div>
+          </div>
+          <p className="mt-8 text-[10px] tracking-[0.3em] text-gray-400 font-bold uppercase">
+            Qualidade e Estilo desde 2026
+          </p>
         </div>
-
-        <div className="relative inline-block group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-black rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-          <button className="relative bg-black text-white px-10 py-4 rounded-full font-bold text-sm tracking-[0.2em] flex items-center gap-3 hover:scale-105 transition-transform">
-            <Star size={16} className="text-yellow-400 fill-yellow-400" />
-            DESDE 2026 SERVINDO COM EXCELÊNCIA
-          </button>
-        </div>
-      </header>
-
-      {/* FORMULÁRIO DE CADASTRO SIMPLIFICADO (SEM CROP) */}
-      {/* Aqui no lugar do Cropper, use apenas um input de arquivo padrão */}
-      <div className="max-w-md mx-auto p-6 border-2 border-dashed border-gray-200 rounded-3xl mb-10">
-        <label className="flex flex-col items-center cursor-pointer">
-          <Upload size={40} className="text-gray-300 mb-2" />
-          <span className="text-xs font-black uppercase tracking-widest">Subir Foto Direto</span>
-          <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-            // Lógica simples de upload aqui
-          }} />
-        </label>
       </div>
 
-      {/* Restante do seu código de produtos... */}
+      {/* NAVEGAÇÃO DE GÊNERO */}
+      <div className="flex justify-center gap-10 py-12 border-b border-gray-50">
+        {['FEMININO', 'MASCULINO'].map((g) => (
+          <button 
+            key={g}
+            onClick={() => setAbaGeral(g as any)}
+            className={`text-xs font-black tracking-widest transition-all ${abaGeral === g ? 'scale-110 opacity-100' : 'opacity-30'}`}
+          >
+            {g}
+          </button>
+        ))}
+      </div>
+
+      {/* GRID DE PRODUTOS */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 p-8">
+        {produtos.filter(p => p.genero === abaGeral).map((prod) => (
+          <div key={prod.id} className="group cursor-pointer">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-[2.5rem] bg-gray-100 mb-6 shadow-sm group-hover:shadow-2xl transition-all duration-500">
+              <img src={prod.fotos?.[0]} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={prod.nome} />
+            </div>
+            <h3 className="font-bold text-[11px] tracking-widest uppercase text-gray-400 mb-1">{prod.nome}</h3>
+            <p className="text-2xl font-black">R$ {prod.preco}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* BOTÃO ADM (Senha: 1234) */}
+      <div className="fixed bottom-8 right-8">
+        <button 
+          onClick={() => { if(prompt("Senha:") === "1234") setIsAdmin(true) }}
+          className="bg-black text-white p-4 rounded-full shadow-xl"
+        >
+          <Settings size={20} />
+        </button>
+      </div>
+
+      {/* MODAL CADASTRO (SEM RECORTE) */}
+      {isAdmin && (
+        <div className="fixed inset-0 bg-white z-[200] p-8 overflow-y-auto">
+          <div className="max-w-xl mx-auto">
+            <div className="flex justify-between mb-12">
+              <h2 className="text-3xl font-black italic">NOVO ITEM</h2>
+              <button onClick={() => setIsAdmin(false)}><X size={30}/></button>
+            </div>
+            
+            <div className="space-y-6">
+              <label className="flex flex-col items-center p-12 border-4 border-dashed border-gray-100 rounded-[3rem] cursor-pointer hover:bg-gray-50 transition-colors">
+                <UploadCloud size={40} className="text-gray-300 mb-2" />
+                <span className="text-[10px] font-black tracking-widest text-gray-400">SELECIONAR FOTO</span>
+                <input type="file" className="hidden" onChange={aoSubirFoto} />
+              </label>
+
+              {novoProd.fotos.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {novoProd.fotos.map((f, i) => <img key={i} src={f} className="h-32 w-full object-cover rounded-2xl" />)}
+                </div>
+              )}
+
+              <input placeholder="NOME DO PRODUTO" className="w-full p-6 bg-gray-50 rounded-2xl font-bold outline-none" value={novoProd.nome} onChange={e => setNovoProd({...novoProd, nome: e.target.value})} />
+              <input placeholder="VALOR (EX: 119,90)" className="w-full p-6 bg-gray-50 rounded-2xl font-bold outline-none" value={novoProd.preco} onChange={e => setNovoProd({...novoProd, preco: e.target.value})} />
+              
+              <button 
+                onClick={async () => {
+                  await supabase.from('produtos').insert([novoProd])
+                  alert("Sucesso!"); window.location.reload()
+                }}
+                className="w-full bg-black text-yellow-500 py-8 rounded-[2rem] font-black tracking-widest mt-6"
+              >
+                PUBLICAR NA LOJA
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
 }
