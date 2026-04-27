@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { Plus, ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, Instagram as InstagramIcon, MessageCircle } from 'lucide-react'
+import { Plus, ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, Instagram, MessageCircle } from 'lucide-react'
 
 // Configuração do Supabase
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -82,7 +82,7 @@ export default function MabellenApp() {
         <div className="fixed inset-0 bg-black/95 z-[200] p-10 flex flex-col text-[#D4AF37]">
           <button onClick={() => setShowMenu(false)} className="self-end"><X size={40}/></button>
           <div className="flex flex-col gap-10 mt-20">
-            <a href="https://www.instagram.com/mabellen_20" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><InstagramIcon size={32}/> INSTAGRAM</a>
+            <a href="https://www.instagram.com/mabellen_20" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><Instagram size={32}/> INSTAGRAM</a>
             <a href="https://wa.me/554499651205" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><MessageCircle size={32}/> WHATSAPP</a>
             <div className="h-px bg-[#D4AF37]/20 w-full my-4"></div>
             <button onClick={() => { setIsAdmin(true); setShowMenu(false) }} className="flex items-center gap-6 text-lg text-gray-500 uppercase tracking-widest text-left"><Settings size={24}/> Painel Admin</button>
