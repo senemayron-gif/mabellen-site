@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { Plus, ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, Instagram as InstagramIcon, MessageCircle } from 'lucide-react'
+import { Plus, ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, MessageCircle } from 'lucide-react'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
@@ -52,7 +52,7 @@ export default function MabellenApp() {
   const salvarProdutoCompleto = async () => {
     const { error } = await supabase.from('produtos').insert([novoProd])
     if (!error) {
-      alert("Salvo com sucesso!"); setIsAdmin(false); carregarProdutos()
+      alert("Salvo!"); setIsAdmin(false); carregarProdutos()
       setNovoProd({ nome: '', preco: '', fotos: [], genero: 'FEMININO', tamanhos_disponiveis: 'P, M, G' })
     }
   }
@@ -72,8 +72,7 @@ export default function MabellenApp() {
         <div className="fixed inset-0 bg-black/95 z-[200] p-10 flex flex-col text-[#D4AF37]">
           <button onClick={() => setShowMenu(false)} className="self-end"><X size={40}/></button>
           <div className="flex flex-col gap-10 mt-20">
-            <a href="https://www.instagram.com/mabellen_20" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><InstagramIcon size={32}/> INSTAGRAM</a>
-            <a href="https://wa.me/554499651205" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><MessageCircle size={32}/> WHATSAPP</a>
+            <a href="https://wa.me/554499651205" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><MessageCircle size={32}/> FALAR NO WHATSAPP</a>
             <div className="h-px bg-[#D4AF37]/20 w-full my-4"></div>
             <button onClick={() => { setIsAdmin(true); setShowMenu(false) }} className="flex items-center gap-6 text-lg text-gray-500 uppercase tracking-widest text-left"><Settings size={24}/> Painel Admin</button>
           </div>
@@ -107,8 +106,7 @@ export default function MabellenApp() {
         <div className="fixed inset-0 bg-white z-[300] p-8 overflow-y-auto">
           <div className="max-w-md mx-auto space-y-8">
             <div className="flex justify-between items-center border-b pb-4"><b className="tracking-widest uppercase">Cadastrar</b><button onClick={() => setIsAdmin(false)}><X/></button></div>
-            <input type="file" onChange={aoSelecionarArquivo} className="w-full p-6 border-2 border-dashed border-gray-200 rounded-3xl text-sm" />
-            <div className="flex gap-3 flex-wrap">{novoProd.fotos.map((f, i) => <img key={i} src={f} className="w-20 h-28 object-cover rounded-2xl shadow-md" />)}</div>
+            <input type="file" onChange={aoSelecionarArquivo} />
             <input type="text" placeholder="Nome" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.nome} onChange={e=>setNovoProd({...novoProd, nome: e.target.value})} />
             <input type="text" placeholder="Preço" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.preco} onChange={e=>setNovoProd({...novoProd, preco: e.target.value})} />
             <input type="text" placeholder="Tamanhos" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.tamanhos_disponiveis} onChange={e=>setNovoProd({...novoProd, tamanhos_disponiveis: e.target.value})} />
@@ -124,7 +122,7 @@ export default function MabellenApp() {
       {showCarrinho && (
         <div className="fixed inset-0 bg-black/60 z-[300] backdrop-blur-sm flex justify-end">
           <div className="w-full max-w-md bg-white h-full p-10 flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center mb-10 border-b pb-6"><b className="text-xl tracking-widest uppercase">Sua Sacola</b><button onClick={() => setShowCarrinho(false)}><X/></button></div>
+            <div className="flex justify-between items-center mb-10 border-b pb-6"><b className="text-xl tracking-widest uppercase">Sacola</b><button onClick={() => setShowCarrinho(false)}><X/></button></div>
             <div className="flex-1 overflow-y-auto space-y-6">
               {carrinho.map(item => (
                 <div key={item.idUnico} className="flex gap-6 items-center">
