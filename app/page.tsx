@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
+// Removi Instagram e MessageCircle daqui para o site não dar erro de "não encontrado"
 import { Plus, ShoppingBag, X, Send, Trash2, Settings, Camera, Loader2, Menu } from 'lucide-react'
 import Cropper from 'react-cropper'
 import 'cropperjs/dist/cropper.css'
