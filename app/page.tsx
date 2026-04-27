@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-// AQUI ESTÁ A MUDANÇA: Usando InstagramIcon para a Vercel não se confundir
 import { Plus, ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, Instagram as InstagramIcon, MessageCircle } from 'lucide-react'
 
 // Configuração do Supabase
@@ -55,7 +54,7 @@ export default function MabellenApp() {
   const salvarProdutoCompleto = async () => {
     const { error } = await supabase.from('produtos').insert([novoProd])
     if (!error) {
-      alert("Salvo!"); setIsAdmin(false); carregarProdutos()
+      alert("Salvo com sucesso!"); setIsAdmin(false); carregarProdutos()
       setNovoProd({ nome: '', preco: '', fotos: [], genero: 'FEMININO', tamanhos_disponiveis: 'P, M, G' })
     }
   }
@@ -70,7 +69,11 @@ export default function MabellenApp() {
         <h1 className="text-2xl tracking-[0.3em] italic font-serif">MABELLEN STORE</h1>
         <button onClick={() => setShowCarrinho(true)} className="relative">
           <ShoppingBag size={28} />
-          {carrinho.length > 0 && <span className="absolute -top-1 -right-1 bg-white text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border border-black">{carrinho.length}</span>}
+          {carrinho.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-white text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border border-black">
+              {carrinho.length}
+            </span>
+          )}
         </button>
       </header>
 
@@ -79,7 +82,6 @@ export default function MabellenApp() {
         <div className="fixed inset-0 bg-black/95 z-[200] p-10 flex flex-col text-[#D4AF37]">
           <button onClick={() => setShowMenu(false)} className="self-end"><X size={40}/></button>
           <div className="flex flex-col gap-10 mt-20">
-            {/* USANDO O NOME CORRIGIDO AQUI TAMBÉM */}
             <a href="https://www.instagram.com/mabellen_20" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><InstagramIcon size={32}/> INSTAGRAM</a>
             <a href="https://wa.me/554499651205" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><MessageCircle size={32}/> WHATSAPP</a>
             <div className="h-px bg-[#D4AF37]/20 w-full my-4"></div>
@@ -94,7 +96,7 @@ export default function MabellenApp() {
           <button onClick={() => setAbaGeral('MASCULINO')} className={`pb-2 ${abaGeral === 'MASCULINO' ? 'border-b-2 border-black text-black' : 'opacity-30 text-gray-400'}`}>MASCULINO</button>
       </div>
 
-      {/* PRODUTOS */}
+      {/* LISTA PRODUTOS */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-6">
         {produtos.filter(p => p.genero === abaGeral).map((prod) => (
           <div key={prod.id} className="flex flex-col">
@@ -117,7 +119,7 @@ export default function MabellenApp() {
       {isAdmin && (
         <div className="fixed inset-0 bg-white z-[300] p-8 overflow-y-auto">
           <div className="max-w-md mx-auto space-y-8">
-            <div className="flex justify-between items-center border-b pb-4"><b className="tracking-widest uppercase">Cadastro</b><button onClick={() => setIsAdmin(false)}><X/></button></div>
+            <div className="flex justify-between items-center border-b pb-4"><b className="tracking-widest uppercase">Cadastrar</b><button onClick={() => setIsAdmin(false)}><X/></button></div>
             <input type="file" onChange={aoSelecionarArquivo} className="w-full p-6 border-2 border-dashed border-gray-200 rounded-3xl text-sm" />
             <div className="flex gap-3 flex-wrap">{novoProd.fotos.map((f, i) => <img key={i} src={f} className="w-20 h-28 object-cover rounded-2xl shadow-md" />)}</div>
             <input type="text" placeholder="Nome" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.nome} onChange={e=>setNovoProd({...novoProd, nome: e.target.value})} />
@@ -136,7 +138,7 @@ export default function MabellenApp() {
       {showCarrinho && (
         <div className="fixed inset-0 bg-black/60 z-[300] backdrop-blur-sm flex justify-end">
           <div className="w-full max-w-md bg-white h-full p-10 flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center mb-10 border-b pb-6"><b className="text-xl tracking-widest uppercase">Sacola</b><button onClick={() => setShowCarrinho(false)}><X/></button></div>
+            <div className="flex justify-between items-center mb-10 border-b pb-6"><b className="text-xl tracking-widest uppercase">Sua Sacola</b><button onClick={() => setShowCarrinho(false)}><X/></button></div>
             <div className="flex-1 overflow-y-auto space-y-6">
               {carrinho.map(item => (
                 <div key={item.idUnico} className="flex gap-6 items-center">
