@@ -21,7 +21,6 @@ export default function MabellenApp() {
 
   const SENHA_ADMIN = "2004" 
 
-  // Categorias atualizadas com CONJUNTO em ambos
   const categoriasFemininas = ['CALCINHA', 'SUTIÃ', 'CALÇA LEGG', 'SHORT LEGG', 'CONJUNTOS', 'LINGERIE', 'MEIAS', 'PIJAMA']
   const categoriasMasculinas = ['CUECA', 'SHORTS', 'BLUSA', 'CAMISETA', 'MEIA', 'CONJUNTO']
 
@@ -51,131 +50,150 @@ export default function MabellenApp() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-24 font-sans text-black">
-      <header className="bg-black text-[#D4AF37] sticky top-0 z-[100] px-6 py-5 flex justify-between items-center shadow-2xl">
-        <button onClick={logarAdmin} className="opacity-40 hover:opacity-100 transition-opacity"><Settings size={24} /></button>
-        <h1 className="text-2xl tracking-[0.3em] italic font-serif uppercase text-center flex-1">Mabellen</h1>
+    <div className="min-h-screen bg-white pb-12 font-sans text-black">
+      {/* HEADER COM LOGO VIBRANTE */}
+      <header className="bg-black text-[#FFD700] sticky top-0 z-[100] px-6 py-6 flex justify-between items-center shadow-[0_4px_20px_rgba(0,0,0,0.3)] border-b border-[#D4AF37]/30">
+        <button onClick={logarAdmin} className="opacity-50 hover:opacity-100 transition-opacity"><Settings size={24} /></button>
+        <div className="text-center">
+            <h1 className="text-3xl tracking-[0.4em] font-black italic font-serif text-[#FFD700] drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">MABELLEN</h1>
+            <p className="text-[8px] tracking-[0.5em] text-white font-bold opacity-80 mt-1">PREMIUM QUALITY</p>
+        </div>
         <button onClick={() => setShowCarrinho(true)} className="relative">
-          <ShoppingBag size={28} />
-          {carrinho.length > 0 && <span className="absolute -top-1 -right-1 bg-white text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border border-black">{carrinho.length}</span>}
+          <ShoppingBag size={30} />
+          {carrinho.length > 0 && <span className="absolute -top-1 -right-1 bg-[#FFD700] text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black border-2 border-black">{carrinho.length}</span>}
         </button>
       </header>
 
-      {/* Seleção de Gênero */}
-      <div className="flex justify-center gap-12 py-8 text-[11px] font-bold tracking-[0.3em]">
-          <button onClick={() => {setAbaGeral('FEMININO'); setCategoriaFiltro('TODOS')}} className={abaGeral === 'FEMININO' ? 'border-b-2 border-black' : 'opacity-30'}>FEMININO</button>
-          <button onClick={() => {setAbaGeral('MASCULINO'); setCategoriaFiltro('TODOS')}} className={abaGeral === 'MASCULINO' ? 'border-b-2 border-black' : 'opacity-30'}>MASCULINO</button>
+      {/* SELEÇÃO DE GÊNERO COM DESTAQUE */}
+      <div className="flex justify-center gap-12 py-10">
+          <button onClick={() => {setAbaGeral('FEMININO'); setCategoriaFiltro('TODOS')}} className={`text-xs font-black tracking-[0.3em] pb-2 transition-all ${abaGeral === 'FEMININO' ? 'border-b-4 border-black text-black scale-110' : 'opacity-20'}`}>FEMININO</button>
+          <button onClick={() => {setAbaGeral('MASCULINO'); setCategoriaFiltro('TODOS')}} className={`text-xs font-black tracking-[0.3em] pb-2 transition-all ${abaGeral === 'MASCULINO' ? 'border-b-4 border-black text-black scale-110' : 'opacity-20'}`}>MASCULINO</button>
       </div>
 
-      {/* Filtro de Categorias (Horizontal) */}
-      <div className="flex gap-3 overflow-x-auto px-6 pb-6 no-scrollbar">
-          <button onClick={() => setCategoriaFiltro('TODOS')} className={`px-5 py-2 rounded-full text-[9px] font-black border transition-all ${categoriaFiltro === 'TODOS' ? 'bg-black text-white border-black' : 'bg-white border-gray-100 text-gray-400'}`}>TODOS</button>
+      {/* FILTRO DE CATEGORIAS */}
+      <div className="flex gap-3 overflow-x-auto px-6 pb-8 no-scrollbar">
+          <button onClick={() => setCategoriaFiltro('TODOS')} className={`px-6 py-2.5 rounded-full text-[10px] font-black border-2 transition-all ${categoriaFiltro === 'TODOS' ? 'bg-black text-white border-black shadow-lg' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>TODOS</button>
           {(abaGeral === 'FEMININO' ? categoriasFemininas : categoriasMasculinas).map(cat => (
-              <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-5 py-2 rounded-full text-[9px] font-black border whitespace-nowrap transition-all ${categoriaFiltro === cat ? 'bg-black text-white border-black' : 'bg-white border-gray-100 text-gray-400'}`}>{cat}</button>
+              <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-6 py-2.5 rounded-full text-[10px] font-black border-2 whitespace-nowrap transition-all ${categoriaFiltro === cat ? 'bg-black text-white border-black shadow-lg' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>{cat}</button>
           ))}
       </div>
 
-      {/* Grid de Produtos */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-6">
+      {/* GRID DE PRODUTOS COM TEXTOS DESTACADOS */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 p-6">
         {produtos.filter(p => p.genero === abaGeral && (categoriaFiltro === 'TODOS' || p.categoria === categoriaFiltro)).map((prod) => (
           <div key={prod.id} className="flex flex-col group">
-            <div className="relative overflow-hidden rounded-[2.5rem] mb-5 shadow-sm bg-gray-50">
-              <img src={prod.fotos?.[0]} className="w-full aspect-[3/4] object-cover transition-transform duration-500 group-hover:scale-105" alt="" />
+            <div className="relative overflow-hidden rounded-[3rem] mb-6 shadow-xl bg-gray-100 border border-gray-100">
+              <img src={prod.fotos?.[0]} className="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
+              <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md text-[#FFD700] px-4 py-1.5 rounded-full text-[9px] font-black tracking-widest border border-[#FFD700]/30 shadow-xl">
+                {prod.categoria}
+              </div>
             </div>
-            <div className="flex justify-between items-start mb-1">
-                <h3 className="font-bold text-[10px] tracking-widest uppercase text-gray-400">{prod.nome}</h3>
-                <span className="text-[8px] bg-black text-white px-2 py-1 rounded-full font-black">{prod.categoria}</span>
-            </div>
-            <p className="text-2xl font-black mb-5 text-black">R$ {prod.preco}</p>
-            <div className="flex flex-wrap gap-2 mb-6">
+            <h3 className="font-black text-xs tracking-[0.2em] mb-2 uppercase text-black border-l-4 border-black pl-3">{prod.nome}</h3>
+            <p className="text-3xl font-black mb-6 text-black tracking-tighter">R$ {prod.preco}</p>
+            
+            <div className="flex flex-wrap gap-2 mb-8">
               {prod.tamanhos_disponiveis?.split(',').map((tam: string) => (
-                <button key={tam} onClick={() => setTamanhoSelecionado({ ...tamanhoSelecionado, [prod.id]: tam.trim() })} className={`w-11 h-11 rounded-xl border-2 text-xs font-bold transition-all ${tamanhoSelecionado[prod.id] === tam.trim() ? 'bg-black border-black text-white' : 'bg-white border-gray-100 text-gray-400'}`}>{tam.trim()}</button>
+                <button key={tam} onClick={() => setTamanhoSelecionado({ ...tamanhoSelecionado, [prod.id]: tam.trim() })} className={`w-12 h-12 rounded-2xl border-2 text-[11px] font-black transition-all shadow-sm ${tamanhoSelecionado[prod.id] === tam.trim() ? 'bg-black border-black text-white scale-110 shadow-lg' : 'bg-white border-gray-200 text-gray-400 hover:border-black'}`}>{tam.trim()}</button>
               ))}
             </div>
             <button onClick={() => {
                 if(!tamanhoSelecionado[prod.id]) { alert("Selecione o tamanho!"); return; }
                 setCarrinho([...carrinho, { ...prod, tamanhoEscolhido: tamanhoSelecionado[prod.id], idUnico: Date.now() }])
-            }} className="w-full bg-black text-white py-5 rounded-2xl font-bold uppercase text-[10px] tracking-[0.2em] active:scale-95 transition-transform">Adicionar à Sacola</button>
+            }} className="w-full bg-black text-white py-6 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.3em] active:scale-95 transition-all shadow-2xl hover:bg-[#1a1a1a]">Adicionar à Sacola</button>
           </div>
         ))}
       </div>
 
-      {/* Botão flutuante do WhatsApp */}
-      <a href="https://wa.me/554499651205?text=Olá! Gostaria de saber mais sobre as peças da loja." target="_blank" className="fixed bottom-6 right-6 bg-[#25D366] text-white p-4 rounded-full shadow-2xl z-[90] hover:scale-110 transition-transform">
+      {/* WHATSAPP */}
+      <a href="https://wa.me/554499651205?text=Olá! Gostaria de saber mais sobre as peças da loja." target="_blank" className="fixed bottom-8 right-8 bg-[#25D366] text-white p-5 rounded-full shadow-[0_10px_30px_rgba(37,211,102,0.5)] z-[90] hover:scale-110 transition-transform">
         <MessageCircle size={35} />
       </a>
 
-      {/* Modal Administrativo */}
+      {/* RODAPÉ MABELLEN STORE */}
+      <footer className="mt-20 border-t-2 border-gray-100 pt-16 pb-12 px-6 text-center">
+          <div className="max-w-xl mx-auto space-y-6">
+              <h2 className="text-3xl font-black tracking-[0.5em] text-black italic">MABELLEN STORE</h2>
+              <div className="flex justify-center gap-6 text-[10px] font-black tracking-[0.3em] text-gray-400 uppercase">
+                  <span>Feminina</span>
+                  <span className="text-black">•</span>
+                  <span>Masculina</span>
+              </div>
+              <div className="bg-black text-[#FFD700] py-4 px-8 rounded-full inline-block mt-4 shadow-xl">
+                  <p className="text-[11px] font-black tracking-[0.2em] uppercase italic">Desde 2026 servindo pessoas com excelência</p>
+              </div>
+          </div>
+      </footer>
+
+      {/* MODAL ADMIN */}
       {isAdmin && (
         <div className="fixed inset-0 bg-white z-[300] p-6 overflow-y-auto">
           <div className="max-w-xl mx-auto space-y-6 pb-20">
-            <div className="flex justify-between items-center border-b pb-4 font-black text-sm tracking-widest uppercase">Cadastrar Peça<button onClick={() => setIsAdmin(false)}><X/></button></div>
-            
-            <div className="border-4 border-dashed border-gray-100 rounded-[2rem] p-10 text-center relative hover:border-black transition-colors">
+            <div className="flex justify-between items-center border-b pb-4 font-black text-sm tracking-widest uppercase">Nova Peça MABELLEN<button onClick={() => setIsAdmin(false)}><X/></button></div>
+            <div className="border-4 border-dashed border-gray-100 rounded-[3rem] p-12 text-center relative hover:border-black transition-colors">
                 <input type="file" onChange={aoSubirFoto} className="absolute inset-0 opacity-0 cursor-pointer" />
                 <UploadCloud className="mx-auto mb-4 text-gray-300" size={50}/>
-                <p className="text-xs font-bold uppercase text-gray-400">Toque para selecionar a foto</p>
+                <p className="text-xs font-black uppercase text-gray-400 tracking-widest">Enviar Foto da Peça</p>
             </div>
-
             <div className="grid grid-cols-4 gap-2">
                 {novoProd.fotos.map((f, i) => (
-                    <img key={i} src={f} className="aspect-[3/4] rounded-lg object-cover shadow-sm" alt="" />
+                    <img key={i} src={f} className="aspect-[3/4] rounded-2xl object-cover shadow-lg border border-gray-100" alt="" />
                 ))}
             </div>
-
-            <input type="text" placeholder="Nome do Produto" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.nome} onChange={e=>setNovoProd({...novoProd, nome: e.target.value})} />
-            <input type="text" placeholder="Valor (Ex: 89,90)" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.preco} onChange={e=>setNovoProd({...novoProd, preco: e.target.value})} />
-            
+            <input type="text" placeholder="Nome do Produto" className="w-full p-6 bg-gray-50 rounded-3xl outline-none border-2 border-transparent focus:border-black transition-all" value={novoProd.nome} onChange={e=>setNovoProd({...novoProd, nome: e.target.value})} />
+            <input type="text" placeholder="Valor (Ex: 89,90)" className="w-full p-6 bg-gray-50 rounded-3xl outline-none border-2 border-transparent focus:border-black transition-all" value={novoProd.preco} onChange={e=>setNovoProd({...novoProd, preco: e.target.value})} />
             <div className="grid grid-cols-2 gap-4">
-                <select className="p-5 bg-gray-50 rounded-2xl font-bold outline-none" value={novoProd.genero} onChange={e=>setNovoProd({...novoProd, genero: e.target.value as any, categoria: e.target.value === 'FEMININO' ? 'CALCINHA' : 'CUECA'})}>
+                <select className="p-6 bg-gray-50 rounded-3xl font-black outline-none border-2 border-transparent focus:border-black" value={novoProd.genero} onChange={e=>setNovoProd({...novoProd, genero: e.target.value as any, categoria: e.target.value === 'FEMININO' ? 'CALCINHA' : 'CUECA'})}>
                     <option value="FEMININO">Feminino</option>
                     <option value="MASCULINO">Masculino</option>
                 </select>
-
-                <select className="p-5 bg-gray-50 rounded-2xl font-bold outline-none" value={novoProd.categoria} onChange={e=>setNovoProd({...novoProd, categoria: e.target.value})}>
+                <select className="p-6 bg-gray-50 rounded-3xl font-black outline-none border-2 border-transparent focus:border-black" value={novoProd.categoria} onChange={e=>setNovoProd({...novoProd, categoria: e.target.value})}>
                     {(novoProd.genero === 'FEMININO' ? categoriasFemininas : categoriasMasculinas).map(c => (
                         <option key={c} value={c}>{c}</option>
                     ))}
                 </select>
             </div>
-
-            <input type="text" placeholder="Tamanhos (P, M, G)" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.tamanhos_disponiveis} onChange={e=>setNovoProd({...novoProd, tamanhos_disponiveis: e.target.value})} />
-            
+            <input type="text" placeholder="Tamanhos (P, M, G)" className="w-full p-6 bg-gray-50 rounded-3xl outline-none border-2 border-transparent focus:border-black transition-all" value={novoProd.tamanhos_disponiveis} onChange={e=>setNovoProd({...novoProd, tamanhos_disponiveis: e.target.value})} />
             <button onClick={async () => {
                 await supabase.from('produtos').insert([novoProd]); 
-                alert("Produto publicado!"); 
-                setIsAdmin(false); 
-                carregarProdutos();
+                alert("Publicado com sucesso!"); setIsAdmin(false); carregarProdutos();
                 setNovoProd({ nome: '', preco: '', fotos: [], genero: 'FEMININO', categoria: 'CALCINHA', tamanhos_disponiveis: 'P, M, G' });
-            }} className="w-full bg-black text-[#D4AF37] py-6 rounded-3xl font-black uppercase tracking-[0.3em]">Publicar agora</button>
+            }} className="w-full bg-black text-[#FFD700] py-6 rounded-[2rem] font-black uppercase tracking-[0.4em] shadow-2xl">Publicar Produto</button>
           </div>
         </div>
       )}
 
-      {/* Carrinho / Sacola */}
+      {/* SACOLA */}
       {showCarrinho && (
-        <div className="fixed inset-0 bg-black/60 z-[300] flex justify-end">
-          <div className="w-full max-w-md bg-white h-full p-10 flex flex-col">
-            <div className="flex justify-between items-center mb-10 font-bold uppercase tracking-widest text-sm border-b pb-6">Sua Sacola<button onClick={() => setShowCarrinho(false)}><X/></button></div>
-            <div className="flex-1 overflow-y-auto space-y-6">
+        <div className="fixed inset-0 bg-black/70 z-[300] flex justify-end backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white h-full p-10 flex flex-col shadow-[-20px_0_40px_rgba(0,0,0,0.2)]">
+            <div className="flex justify-between items-center mb-10 font-black uppercase tracking-widest text-sm border-b-2 pb-6">Sua Seleção<button onClick={() => setShowCarrinho(false)}><X size={30}/></button></div>
+            <div className="flex-1 overflow-y-auto space-y-8 no-scrollbar">
               {carrinho.map(item => (
-                <div key={item.idUnico} className="flex gap-4 items-center border-b pb-4">
-                  <img src={item.fotos?.[0]} className="w-16 h-20 object-cover rounded-lg" alt="" />
+                <div key={item.idUnico} className="flex gap-5 items-center border-b border-gray-50 pb-6">
+                  <img src={item.fotos?.[0]} className="w-20 h-24 object-cover rounded-2xl shadow-md" alt="" />
                   <div className="flex-1">
-                    <p className="font-bold text-[10px] uppercase">{item.nome}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">{item.categoria} • TAM: {item.tamanhoEscolhido}</p>
-                    <p className="font-black text-sm">R$ {item.preco}</p>
+                    <p className="font-black text-xs uppercase tracking-wider">{item.nome}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">{item.categoria} • TAM: {item.tamanhoEscolhido}</p>
+                    <p className="font-black text-lg mt-1">R$ {item.preco}</p>
                   </div>
-                  <button onClick={() => setCarrinho(carrinho.filter(c => c.idUnico !== item.idUnico))} className="text-red-500"><Trash2 size={18}/></button>
+                  <button onClick={() => setCarrinho(carrinho.filter(c => c.idUnico !== item.idUnico))} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 size={22}/></button>
                 </div>
               ))}
             </div>
             {carrinho.length > 0 && (
-              <button onClick={() => {
-                  let msg = `*🛍️ NOVO PEDIDO - MABELLEN*%0A%0A`
-                  carrinho.forEach(i => msg += `• ${i.nome} (${i.categoria}) | Tam: ${i.tamanhoEscolhido} | R$ ${i.preco}%0A`)
-                  window.open(`https://wa.me/554499651205?text=${msg}`)
-              }} className="w-full bg-[#25D366] text-white py-6 rounded-3xl font-black uppercase text-[10px] flex justify-center gap-2 items-center mt-6 shadow-xl"><Send size={18}/> Enviar via WhatsApp</button>
+              <div className="pt-8 space-y-4">
+                <div className="flex justify-between font-black uppercase tracking-tighter text-xl px-2">
+                    <span>Total</span>
+                    <span>R$ {carrinho.reduce((acc, item) => acc + parseFloat(item.preco.replace(',', '.')), 0).toFixed(2).replace('.', ',')}</span>
+                </div>
+                <button onClick={() => {
+                    let msg = `*🛍️ PEDIDO MABELLEN STORE*%0A%0A`
+                    carrinho.forEach(i => msg += `• *${i.nome}* (${i.categoria}) | Tam: *${i.tamanhoEscolhido}* | R$ ${i.preco}%0A`)
+                    const total = carrinho.reduce((acc, item) => acc + parseFloat(item.preco.replace(',', '.')), 0).toFixed(2).replace('.', ',')
+                    msg += `%0A💰 *Total: R$ ${total}*%0A%0A_Aguardando confirmação de disponibilidade._`
+                    window.open(`https://wa.me/554499651205?text=${msg}`)
+                }} className="w-full bg-[#25D366] text-white py-7 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] flex justify-center gap-3 items-center shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-[1.02] transition-transform"><Send size={20}/> Finalizar no WhatsApp</button>
+              </div>
             )}
           </div>
         </div>
