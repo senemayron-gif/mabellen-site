@@ -16,8 +16,8 @@ export default function MabellenApp() {
   const [abaGeral, setAbaGeral] = useState<'FEMININO' | 'MASCULINO'>('FEMININO')
   const [novoProd, setNovoProd] = useState({ nome: '', preco: '', fotos: [] as string[], genero: 'FEMININO', tamanhos_disponiveis: 'P, M, G' })
 
-  // --- CONFIGURAÇÃO DE SEGURANÇA ---
-  const SENHA_ADMIN = "1234" // ALTERE SUA SENHA AQUI
+  // --- ALTERE SUA SENHA AQUI ---
+  const SENHA_ADMIN = "1234" 
 
   const carregarProdutos = async () => {
     const { data } = await supabase.from('produtos').select('*').order('created_at', { ascending: false })
@@ -27,12 +27,12 @@ export default function MabellenApp() {
   useEffect(() => { carregarProdutos() }, [])
 
   const logarAdmin = () => {
-    const senha = prompt("Digite a senha de administrador:")
+    const senha = prompt("Senha de acesso:")
     if (senha === SENHA_ADMIN) {
       setIsAdmin(true)
       setShowMenu(false)
     } else {
-      alert("Senha incorreta!")
+      alert("Acesso negado!")
     }
   }
 
@@ -84,25 +84,28 @@ export default function MabellenApp() {
       {showMenu && (
         <div className="fixed inset-0 bg-black/95 z-[200] p-10 flex flex-col text-[#D4AF37]">
           <button onClick={() => setShowMenu(false)} className="self-end"><X size={40}/></button>
-          <div className="flex flex-col items-center justify-center h-full gap-16">
-            {/* Ícones Grandes e Limpos */}
-            <a href="https://wa.me/554499651205?text=Olá! Tenho interesse em conhecer as novidades da Mabellen Store." target="_blank" className="hover:scale-110 transition-transform">
+          <div className="flex flex-col items-center justify-center h-full gap-20">
+            {/* WhatsApp com escrita */}
+            <a href="https://wa.me/554499651205?text=Olá! Tenho interesse em conhecer as novidades da Mabellen Store." target="_blank" className="flex flex-col items-center gap-4 hover:scale-110 transition-transform">
                 <MessageCircle size={80}/>
+                <span className="text-[10px] tracking-[0.3em] font-bold">FALAR NO WHATSAPP</span>
             </a>
             
-            <button onClick={logarAdmin} className="hover:scale-110 transition-transform opacity-50">
-                <Settings size={40}/>
+            {/* Apenas a engrenagem para o Admin */}
+            <button onClick={logarAdmin} className="hover:scale-110 transition-transform opacity-30 mt-10">
+                <Settings size={35}/>
             </button>
           </div>
         </div>
       )}
 
-      {/* FILTROS E LISTA - CONTINUA IGUAL */}
+      {/* FILTROS */}
       <div className="flex justify-center gap-12 py-10 text-[11px] font-bold tracking-[0.3em]">
           <button onClick={() => setAbaGeral('FEMININO')} className={`pb-2 ${abaGeral === 'FEMININO' ? 'border-b-2 border-black text-black' : 'opacity-30 text-gray-400'}`}>FEMININO</button>
           <button onClick={() => setAbaGeral('MASCULINO')} className={`pb-2 ${abaGeral === 'MASCULINO' ? 'border-b-2 border-black text-black' : 'opacity-30 text-gray-400'}`}>MASCULINO</button>
       </div>
 
+      {/* LISTA PRODUTOS */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-6">
         {produtos.filter(p => p.genero === abaGeral).map((prod) => (
           <div key={prod.id} className="flex flex-col">
@@ -121,14 +124,15 @@ export default function MabellenApp() {
         ))}
       </div>
 
+      {/* PAINEL ADMIN (SÓ ABRE COM SENHA) */}
       {isAdmin && (
         <div className="fixed inset-0 bg-white z-[300] p-8 overflow-y-auto text-black">
           <div className="max-w-md mx-auto space-y-8">
-            <div className="flex justify-between items-center border-b pb-4"><b className="tracking-widest uppercase">Cadastrar Produto</b><button onClick={() => setIsAdmin(false)}><X/></button></div>
-            <input type="file" onChange={aoSelecionarArquivo} className="w-full p-4 border rounded-xl" />
-            <input type="text" placeholder="Nome do Produto" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.nome} onChange={e=>setNovoProd({...novoProd, nome: e.target.value})} />
-            <input type="text" placeholder="Preço (ex: 99,90)" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.preco} onChange={e=>setNovoProd({...novoProd, preco: e.target.value})} />
-            <input type="text" placeholder="Tamanhos (ex: P, M, G)" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.tamanhos_disponiveis} onChange={e=>setNovoProd({...novoProd, tamanhos_disponiveis: e.target.value})} />
+            <div className="flex justify-between items-center border-b pb-4"><b className="tracking-widest uppercase text-sm">Novo Produto</b><button onClick={() => setIsAdmin(false)}><X/></button></div>
+            <input type="file" onChange={aoSelecionarArquivo} className="w-full p-4 border rounded-xl text-xs" />
+            <input type="text" placeholder="Nome" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.nome} onChange={e=>setNovoProd({...novoProd, nome: e.target.value})} />
+            <input type="text" placeholder="Preço" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.preco} onChange={e=>setNovoProd({...novoProd, preco: e.target.value})} />
+            <input type="text" placeholder="Tamanhos (P, M, G)" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.tamanhos_disponiveis} onChange={e=>setNovoProd({...novoProd, tamanhos_disponiveis: e.target.value})} />
             <select className="w-full p-5 bg-gray-50 rounded-2xl outline-none font-bold" value={novoProd.genero} onChange={e=>setNovoProd({...novoProd, genero: e.target.value as any})}>
                 <option value="FEMININO">FEMININO</option>
                 <option value="MASCULINO">MASCULINO</option>
@@ -138,7 +142,7 @@ export default function MabellenApp() {
         </div>
       )}
 
-      {/* SACOLA - CONTINUA IGUAL */}
+      {/* SACOLA */}
       {showCarrinho && (
         <div className="fixed inset-0 bg-black/60 z-[300] backdrop-blur-sm flex justify-end">
           <div className="w-full max-w-md bg-white h-full p-10 flex flex-col shadow-2xl text-black">
@@ -159,7 +163,7 @@ export default function MabellenApp() {
             {carrinho.length > 0 && (
               <div className="pt-8 border-t space-y-4">
                 <div className="flex justify-between font-black text-xl"><span>TOTAL</span><span>R$ {carrinho.reduce((acc, i) => acc + parseFloat(i.preco.replace(',', '.')), 0).toFixed(2).replace('.', ',')}</span></div>
-                <button onClick={finalizarPedido} className="w-full bg-[#25D366] text-white py-6 rounded-3xl font-black flex items-center justify-center gap-3 uppercase text-[10px] tracking-[0.2em] shadow-lg"><Send size={20}/> WhatsApp</button>
+                <button onClick={finalizarPedido} className="w-full bg-[#25D366] text-white py-6 rounded-3xl font-black flex items-center justify-center gap-3 uppercase text-[10px] tracking-[0.2em] shadow-lg"><Send size={20}/> Finalizar no WhatsApp</button>
               </div>
             )}
           </div>
