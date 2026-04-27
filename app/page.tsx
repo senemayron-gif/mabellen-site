@@ -79,7 +79,7 @@ export default function MabellenApp() {
     <div className="min-h-screen bg-white pb-24">
       <header className="bg-black text-[#D4AF37] sticky top-0 z-[100] px-6 py-5 flex justify-between items-center shadow-xl">
         <button onClick={() => setShowMenu(true)}><Menu size={30} /></button>
-        <h1 className="text-2xl tracking-[0.3em] italic">MABELLEN</h1>
+        <h1 className="text-2xl tracking-[0.3em] italic">MABELLEN </h1>
         <button onClick={() => setShowCarrinho(true)} className="relative">
           <ShoppingBag size={28} />
           {carrinho.length > 0 && <span className="absolute -top-1 -right-1 bg-white text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">{carrinho.length}</span>}
