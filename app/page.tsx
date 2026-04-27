@@ -36,9 +36,34 @@ export default function MabellenApp() {
     if (data) setProdutos(data)
   }
 
+  // --- IMPLEMENTAÇÃO DO REALTIME ---
   useEffect(() => {
+    // Busca inicial
     carregarProdutos()
+
+    // Configura o canal para escutar mudanças em tempo real
+    const canal = supabase
+      .channel('alteracoes_estoque')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Escuta INSERT, UPDATE e DELETE
+          schema: 'public',
+          table: 'produtos'
+        },
+        (payload) => {
+          console.log('Mudança detectada no estoque:', payload)
+          carregarProdutos() // Recarrega a lista para o cliente na hora
+        }
+      )
+      .subscribe()
+
+    // Limpa a conexão ao fechar o app
+    return () => {
+      supabase.removeChannel(canal)
+    }
   }, [])
+  // --------------------------------
 
   const handleLogin = () => {
     if (senha === '2004') {
@@ -57,6 +82,7 @@ export default function MabellenApp() {
       await supabase.from('produtos').insert([p])
     }
     setEditando(null)
+    // Nota: carregarProdutos() aqui é opcional agora, pois o Realtime já vai detectar o salvamento
     carregarProdutos()
   }
 
