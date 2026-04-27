@@ -17,7 +17,8 @@ export const metadata: Metadata = {
   description: "Loja Oficial Mabellen - Moda e Estilo",
   manifest: "/manifest.json",
   icons: {
-    apple: "/icon-512x512.png",
+    icon: "/favicon.ico?v=1", // Isso aqui muda o ícone da aba do PC
+    apple: "/icon-512x512.png?v=1",
   },
 };
 
