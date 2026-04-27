@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { Plus, ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, Instagram, MessageCircle } from 'lucide-react'
+import { Plus, ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, Instagram as InstagramIcon, MessageCircle } from 'lucide-react'
 
-// Configuração do Supabase
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
 export default function MabellenApp() {
@@ -15,7 +14,6 @@ export default function MabellenApp() {
   const [showMenu, setShowMenu] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [abaGeral, setAbaGeral] = useState<'FEMININO' | 'MASCULINO'>('FEMININO')
-  
   const [novoProd, setNovoProd] = useState({ nome: '', preco: '', fotos: [] as string[], genero: 'FEMININO', tamanhos_disponiveis: 'P, M, G' })
 
   const carregarProdutos = async () => {
@@ -61,28 +59,20 @@ export default function MabellenApp() {
 
   return (
     <div className="min-h-screen bg-white pb-24 font-sans text-black">
-      {/* HEADER */}
       <header className="bg-black text-[#D4AF37] sticky top-0 z-[100] px-6 py-5 flex justify-between items-center shadow-2xl">
-        <button onClick={() => setShowMenu(true)} className="hover:opacity-70">
-          <Menu size={30} />
-        </button>
+        <button onClick={() => setShowMenu(true)} className="hover:opacity-70"><Menu size={30} /></button>
         <h1 className="text-2xl tracking-[0.3em] italic font-serif">MABELLEN STORE</h1>
         <button onClick={() => setShowCarrinho(true)} className="relative">
           <ShoppingBag size={28} />
-          {carrinho.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-white text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border border-black">
-              {carrinho.length}
-            </span>
-          )}
+          {carrinho.length > 0 && <span className="absolute -top-1 -right-1 bg-white text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border border-black">{carrinho.length}</span>}
         </button>
       </header>
 
-      {/* MENU LATERAL */}
       {showMenu && (
         <div className="fixed inset-0 bg-black/95 z-[200] p-10 flex flex-col text-[#D4AF37]">
           <button onClick={() => setShowMenu(false)} className="self-end"><X size={40}/></button>
           <div className="flex flex-col gap-10 mt-20">
-            <a href="https://www.instagram.com/mabellen_20" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><Instagram size={32}/> INSTAGRAM</a>
+            <a href="https://www.instagram.com/mabellen_20" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><InstagramIcon size={32}/> INSTAGRAM</a>
             <a href="https://wa.me/554499651205" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><MessageCircle size={32}/> WHATSAPP</a>
             <div className="h-px bg-[#D4AF37]/20 w-full my-4"></div>
             <button onClick={() => { setIsAdmin(true); setShowMenu(false) }} className="flex items-center gap-6 text-lg text-gray-500 uppercase tracking-widest text-left"><Settings size={24}/> Painel Admin</button>
@@ -90,13 +80,11 @@ export default function MabellenApp() {
         </div>
       )}
 
-      {/* FILTROS */}
       <div className="flex justify-center gap-12 py-10 text-[11px] font-bold tracking-[0.3em]">
           <button onClick={() => setAbaGeral('FEMININO')} className={`pb-2 ${abaGeral === 'FEMININO' ? 'border-b-2 border-black text-black' : 'opacity-30 text-gray-400'}`}>FEMININO</button>
           <button onClick={() => setAbaGeral('MASCULINO')} className={`pb-2 ${abaGeral === 'MASCULINO' ? 'border-b-2 border-black text-black' : 'opacity-30 text-gray-400'}`}>MASCULINO</button>
       </div>
 
-      {/* LISTA PRODUTOS */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-6">
         {produtos.filter(p => p.genero === abaGeral).map((prod) => (
           <div key={prod.id} className="flex flex-col">
@@ -115,7 +103,6 @@ export default function MabellenApp() {
         ))}
       </div>
 
-      {/* ADMIN */}
       {isAdmin && (
         <div className="fixed inset-0 bg-white z-[300] p-8 overflow-y-auto">
           <div className="max-w-md mx-auto space-y-8">
@@ -134,7 +121,6 @@ export default function MabellenApp() {
         </div>
       )}
 
-      {/* SACOLA */}
       {showCarrinho && (
         <div className="fixed inset-0 bg-black/60 z-[300] backdrop-blur-sm flex justify-end">
           <div className="w-full max-w-md bg-white h-full p-10 flex flex-col shadow-2xl">
