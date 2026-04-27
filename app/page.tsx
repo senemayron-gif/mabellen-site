@@ -16,12 +16,25 @@ export default function MabellenApp() {
   const [abaGeral, setAbaGeral] = useState<'FEMININO' | 'MASCULINO'>('FEMININO')
   const [novoProd, setNovoProd] = useState({ nome: '', preco: '', fotos: [] as string[], genero: 'FEMININO', tamanhos_disponiveis: 'P, M, G' })
 
+  // --- CONFIGURAÇÃO DE SEGURANÇA ---
+  const SENHA_ADMIN = "1234" // ALTERE SUA SENHA AQUI
+
   const carregarProdutos = async () => {
     const { data } = await supabase.from('produtos').select('*').order('created_at', { ascending: false })
     if (data) setProdutos(data)
   }
 
   useEffect(() => { carregarProdutos() }, [])
+
+  const logarAdmin = () => {
+    const senha = prompt("Digite a senha de administrador:")
+    if (senha === SENHA_ADMIN) {
+      setIsAdmin(true)
+      setShowMenu(false)
+    } else {
+      alert("Senha incorreta!")
+    }
+  }
 
   const adicionarAoCarrinho = (prod: any) => {
     const tam = tamanhoSelecionado[prod.id]
@@ -71,14 +84,20 @@ export default function MabellenApp() {
       {showMenu && (
         <div className="fixed inset-0 bg-black/95 z-[200] p-10 flex flex-col text-[#D4AF37]">
           <button onClick={() => setShowMenu(false)} className="self-end"><X size={40}/></button>
-          <div className="flex flex-col gap-10 mt-20">
-            <a href="https://wa.me/554499651205" target="_blank" className="flex items-center gap-6 text-2xl tracking-[0.2em]"><MessageCircle size={32}/> FALAR NO WHATSAPP</a>
-            <div className="h-px bg-[#D4AF37]/20 w-full my-4"></div>
-            <button onClick={() => { setIsAdmin(true); setShowMenu(false) }} className="flex items-center gap-6 text-lg text-gray-500 uppercase tracking-widest text-left"><Settings size={24}/> Painel Admin</button>
+          <div className="flex flex-col items-center justify-center h-full gap-16">
+            {/* Ícones Grandes e Limpos */}
+            <a href="https://wa.me/554499651205?text=Olá! Tenho interesse em conhecer as novidades da Mabellen Store." target="_blank" className="hover:scale-110 transition-transform">
+                <MessageCircle size={80}/>
+            </a>
+            
+            <button onClick={logarAdmin} className="hover:scale-110 transition-transform opacity-50">
+                <Settings size={40}/>
+            </button>
           </div>
         </div>
       )}
 
+      {/* FILTROS E LISTA - CONTINUA IGUAL */}
       <div className="flex justify-center gap-12 py-10 text-[11px] font-bold tracking-[0.3em]">
           <button onClick={() => setAbaGeral('FEMININO')} className={`pb-2 ${abaGeral === 'FEMININO' ? 'border-b-2 border-black text-black' : 'opacity-30 text-gray-400'}`}>FEMININO</button>
           <button onClick={() => setAbaGeral('MASCULINO')} className={`pb-2 ${abaGeral === 'MASCULINO' ? 'border-b-2 border-black text-black' : 'opacity-30 text-gray-400'}`}>MASCULINO</button>
@@ -103,13 +122,13 @@ export default function MabellenApp() {
       </div>
 
       {isAdmin && (
-        <div className="fixed inset-0 bg-white z-[300] p-8 overflow-y-auto">
+        <div className="fixed inset-0 bg-white z-[300] p-8 overflow-y-auto text-black">
           <div className="max-w-md mx-auto space-y-8">
-            <div className="flex justify-between items-center border-b pb-4"><b className="tracking-widest uppercase">Cadastrar</b><button onClick={() => setIsAdmin(false)}><X/></button></div>
-            <input type="file" onChange={aoSelecionarArquivo} />
-            <input type="text" placeholder="Nome" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.nome} onChange={e=>setNovoProd({...novoProd, nome: e.target.value})} />
-            <input type="text" placeholder="Preço" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.preco} onChange={e=>setNovoProd({...novoProd, preco: e.target.value})} />
-            <input type="text" placeholder="Tamanhos" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.tamanhos_disponiveis} onChange={e=>setNovoProd({...novoProd, tamanhos_disponiveis: e.target.value})} />
+            <div className="flex justify-between items-center border-b pb-4"><b className="tracking-widest uppercase">Cadastrar Produto</b><button onClick={() => setIsAdmin(false)}><X/></button></div>
+            <input type="file" onChange={aoSelecionarArquivo} className="w-full p-4 border rounded-xl" />
+            <input type="text" placeholder="Nome do Produto" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.nome} onChange={e=>setNovoProd({...novoProd, nome: e.target.value})} />
+            <input type="text" placeholder="Preço (ex: 99,90)" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.preco} onChange={e=>setNovoProd({...novoProd, preco: e.target.value})} />
+            <input type="text" placeholder="Tamanhos (ex: P, M, G)" className="w-full p-5 bg-gray-50 rounded-2xl outline-none" value={novoProd.tamanhos_disponiveis} onChange={e=>setNovoProd({...novoProd, tamanhos_disponiveis: e.target.value})} />
             <select className="w-full p-5 bg-gray-50 rounded-2xl outline-none font-bold" value={novoProd.genero} onChange={e=>setNovoProd({...novoProd, genero: e.target.value as any})}>
                 <option value="FEMININO">FEMININO</option>
                 <option value="MASCULINO">MASCULINO</option>
@@ -119,9 +138,10 @@ export default function MabellenApp() {
         </div>
       )}
 
+      {/* SACOLA - CONTINUA IGUAL */}
       {showCarrinho && (
         <div className="fixed inset-0 bg-black/60 z-[300] backdrop-blur-sm flex justify-end">
-          <div className="w-full max-w-md bg-white h-full p-10 flex flex-col shadow-2xl">
+          <div className="w-full max-w-md bg-white h-full p-10 flex flex-col shadow-2xl text-black">
             <div className="flex justify-between items-center mb-10 border-b pb-6"><b className="text-xl tracking-widest uppercase">Sacola</b><button onClick={() => setShowCarrinho(false)}><X/></button></div>
             <div className="flex-1 overflow-y-auto space-y-6">
               {carrinho.map(item => (
