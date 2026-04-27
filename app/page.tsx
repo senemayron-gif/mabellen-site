@@ -17,11 +17,27 @@ export default function MabellenApp() {
   const cropperRef = useRef<any>(null)
 
   const carregarProdutos = async () => {
-    const { data } = await supabase.from('produtos').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('produtos').select('*').order('created_at', { ascending: false })
+    if (error) console.error("Erro ao carregar:", error)
     if (data) setProdutos(data)
   }
 
   useEffect(() => { carregarProdutos() }, [])
+
+  // FUNÇÃO DE EXCLUIR CORRIGIDA
+  const handleExcluir = async (id: string) => {
+    const certeza = window.confirm("Deseja realmente apagar este produto da vitrine?")
+    if (!certeza) return
+
+    const { error } = await supabase.from('produtos').delete().eq('id', id)
+    
+    if (error) {
+      alert("Erro ao excluir: " + error.message)
+    } else {
+      // Atualiza a lista na hora
+      setProdutos(produtos.filter(p => p.id !== id))
+    }
+  }
 
   const aoSelecionarArquivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
@@ -48,87 +64,75 @@ export default function MabellenApp() {
     }, 'image/jpeg')
   }
 
-  const handleExcluir = async (id: string) => {
-    if (confirm('Deseja excluir este item?')) {
-      await supabase.from('produtos').delete().eq('id', id)
-      carregarProdutos()
-    }
-  }
-
   return (
     <div className="min-h-screen bg-white">
       <header className="py-6 text-center bg-black text-[#D4AF37] sticky top-0 z-50 border-b border-[#D4AF37]/20">
-        <h1 className="text-3xl tracking-[0.2em] font-light">M A B E L L E N</h1>
-        <button onClick={() => setIsAdmin(!isAdmin)} className="absolute right-4 top-7 opacity-20"><Settings size={18}/></button>
+        <h1 className="text-3xl tracking-[0.2em] font-light italic">MABELLEN</h1>
+        <button onClick={() => setIsAdmin(!isAdmin)} className="absolute right-4 top-7 opacity-30"><Settings size={20}/></button>
       </header>
 
-      {/* Grid Proporcional: 2 colunas no celular, 4 no computador */}
       <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
         {produtos.map((prod) => (
-          <div key={prod.id} className="group bg-gray-50 rounded-xl p-2 border border-gray-100">
+          <div key={prod.id} className="relative bg-gray-50 rounded-xl p-2 border border-gray-100 group">
             <div className="aspect-[3/4] overflow-hidden rounded-lg relative">
               <img src={prod.fotos?.[0]} className="w-full h-full object-cover" />
+              
+              {/* BOTÃO DE EXCLUIR COM CORES FORTES PARA TESTE */}
               {isAdmin && (
-                <button onClick={() => handleExcluir(prod.id)} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full shadow-lg transition-transform active:scale-90">
-                  <Trash2 size={16}/>
+                <button 
+                  onClick={() => handleExcluir(prod.id)}
+                  className="absolute top-2 right-2 bg-red-600 text-white p-3 rounded-full shadow-2xl z-30 hover:scale-110 active:bg-red-800 transition-all"
+                  title="Excluir Produto"
+                >
+                  <Trash2 size={20}/>
                 </button>
               )}
             </div>
-            <div className="mt-3 text-center">
-              <h3 className="text-[10px] text-gray-400 uppercase tracking-widest truncate px-2">{prod.nome}</h3>
-              <p className="font-bold text-black text-lg">R$ {prod.preco}</p>
+            <div className="mt-2 text-center">
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest">{prod.nome}</p>
+              <p className="font-bold text-black">R$ {prod.preco}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Botão de Adicionar centralizado */}
-      {isAdmin && (
-        <button onClick={() => setEditando({ nome: '', preco: '', fotos: [] })} className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-black text-[#D4AF37] p-5 rounded-full shadow-2xl z-[60] active:scale-95 transition-transform">
-          <Plus size={32}/>
-        </button>
-      )}
-
-      {/* Modal de Recorte (Full Screen) */}
+      {/* Editor de Recorte */}
       {imagemParaRecortar && (
-        <div className="fixed inset-0 bg-black z-[100] flex flex-col">
-          <div className="flex justify-between p-4 text-white items-center bg-black/50 backdrop-blur-md">
-            <button onClick={() => setImagemParaRecortar(null)} className="px-4 py-2 text-sm">Cancelar</button>
-            <h2 className="font-bold">Ajustar Enquadramento</h2>
-            <button onClick={finalizarRecorteESalvar} className="bg-[#D4AF37] text-black px-6 py-2 rounded-full font-bold flex items-center gap-2">
-              {subindo ? <Loader2 className="animate-spin" size={18}/> : 'Aplicar'}
+        <div className="fixed inset-0 bg-black z-[100] flex flex-col p-4">
+          <div className="flex justify-between text-white mb-4 items-center">
+            <button onClick={() => setImagemParaRecortar(null)}>Cancelar</button>
+            <button onClick={finalizarRecorteESalvar} className="bg-[#D4AF37] text-black px-6 py-2 rounded-full font-bold">
+              {subindo ? 'Processando...' : 'Aplicar'}
             </button>
           </div>
-          <div className="flex-1 overflow-hidden bg-gray-900">
-            <Cropper src={imagemParaRecortar} style={{height: '100%', width: '100%'}} aspectRatio={3/4} guides={true} ref={cropperRef} viewMode={1} dragMode="move" />
+          <div className="flex-1">
+            <Cropper src={imagemParaRecortar} style={{ height: '100%', width: '100%' }} aspectRatio={3/4} guides={true} ref={cropperRef} viewMode={1} />
           </div>
         </div>
       )}
 
-      {/* Modal de Cadastro */}
+      {isAdmin && (
+        <button onClick={() => setEditando({ nome: '', preco: '', fotos: [] })} className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-black text-[#D4AF37] p-5 rounded-full shadow-2xl z-50 border border-[#D4AF37]/50">
+          <Plus size={32}/>
+        </button>
+      )}
+
+      {/* Modal Cadastro */}
       {editando && (
         <div className="fixed inset-0 bg-white z-[80] p-6 overflow-y-auto">
-          <div className="max-w-md mx-auto space-y-5">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Novo Produto</h2>
-              <button onClick={() => setEditando(null)}><X size={24}/></button>
-            </div>
-            <div className="border-2 border-dashed border-gray-200 rounded-3xl p-10 text-center relative bg-gray-50 active:border-[#D4AF37] transition-colors">
+          <div className="max-w-md mx-auto space-y-4">
+            <div className="flex justify-between items-center"><h2 className="text-xl font-bold">Novo Item</h2><button onClick={() => setEditando(null)}><X size={24}/></button></div>
+            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center relative bg-gray-50">
               <input type="file" accept="image/*" onChange={aoSelecionarArquivo} className="absolute inset-0 opacity-0 cursor-pointer" />
-              <Camera className="mx-auto text-gray-300 mb-2" size={40} />
-              <p className="text-sm font-medium">Abrir Galeria e Recortar</p>
+              <Camera className="mx-auto text-gray-400 mb-2" size={30} />
+              <p className="text-xs">Toque para selecionar foto</p>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {editando.fotos?.map((f: string, i: number) => (
-                <div key={i} className="relative flex-shrink-0">
-                  <img src={f} className="w-20 h-28 object-cover rounded-xl border border-gray-200" />
-                  <button onClick={() => setEditando({...editando, fotos: editando.fotos.filter((_:any, idx:any)=>idx!==i)})} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={10}/></button>
-                </div>
-              ))}
+            <div className="flex gap-2 overflow-x-auto">
+              {editando.fotos?.map((f:any, i:any) => <img key={i} src={f} className="w-16 h-20 object-cover rounded-lg border" />)}
             </div>
-            <input type="text" placeholder="Nome do Conjunto" className="w-full p-4 bg-gray-100 rounded-2xl outline-none" value={editando.nome} onChange={e=>setEditando({...editando, nome: e.target.value})} />
-            <input type="text" placeholder="Preço (ex: 89,90)" className="w-full p-4 bg-gray-100 rounded-2xl outline-none" value={editando.preco} onChange={e=>setEditando({...editando, preco: e.target.value})} />
-            <button onClick={async () => { await supabase.from('produtos').insert([editando]); setEditando(null); carregarProdutos(); }} className="w-full bg-black text-[#D4AF37] p-5 rounded-2xl font-bold shadow-xl active:scale-95 transition-transform">SALVAR NA VITRINE</button>
+            <input type="text" placeholder="Nome" className="w-full p-4 bg-gray-100 rounded-xl" value={editando.nome} onChange={e=>setEditando({...editando, nome: e.target.value})} />
+            <input type="text" placeholder="Preço" className="w-full p-4 bg-gray-100 rounded-xl" value={editando.preco} onChange={e=>setEditando({...editando, preco: e.target.value})} />
+            <button onClick={async () => { await supabase.from('produtos').insert([editando]); setEditando(null); carregarProdutos(); }} className="w-full bg-black text-[#D4AF37] p-4 rounded-xl font-bold">SALVAR</button>
           </div>
         </div>
       )}
