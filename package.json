@@ -1,29 +1,52 @@
-{
-  "name": "mabellen",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.104.1",
-    "lucide-react": "^1.11.0",
-    "next": "16.2.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-cropper": "^1.3.7",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.4",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+// Removidos os imports do Cropper que causavam erro
+import { useState, useEffect } from 'react';
+import { 
+  ShoppingBag, X, Send, Trash2, Settings, Camera, Menu, 
+  MessageCircle, Upload, Plus, ChevronRight, Star 
+} from 'lucide-react';
+import { createClient } from '@supabase/supabase-base';
+
+// ... (mantenha sua configuração do supabase aqui)
+
+export default function MabellenStore() {
+  // ... (mantenha seus estados aqui)
+
+  return (
+    <div className="min-h-screen bg-white font-sans text-black">
+      {/* SEÇÃO DESTAQUE MABELLEN - DESIGN MELHORADO */}
+      <header className="py-12 px-4 text-center bg-gradient-to-b from-gray-50 to-white">
+        <h1 className="text-5xl md:text-7xl font-black tracking-tighter italic mb-4">
+          MABELLEN <span className="text-yellow-500 text-3xl md:text-5xl block md:inline ml-2">STORE</span>
+        </h1>
+        
+        <div className="flex items-center justify-center gap-4 mb-8 text-gray-400 font-bold tracking-widest text-xs uppercase">
+          <span>Feminina</span>
+          <div className="w-1 h-1 bg-black rounded-full"></div>
+          <span>Masculina</span>
+        </div>
+
+        <div className="relative inline-block group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-black rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+          <button className="relative bg-black text-white px-10 py-4 rounded-full font-bold text-sm tracking-[0.2em] flex items-center gap-3 hover:scale-105 transition-transform">
+            <Star size={16} className="text-yellow-400 fill-yellow-400" />
+            DESDE 2026 SERVINDO COM EXCELÊNCIA
+          </button>
+        </div>
+      </header>
+
+      {/* FORMULÁRIO DE CADASTRO SIMPLIFICADO (SEM CROP) */}
+      {/* Aqui no lugar do Cropper, use apenas um input de arquivo padrão */}
+      <div className="max-w-md mx-auto p-6 border-2 border-dashed border-gray-200 rounded-3xl mb-10">
+        <label className="flex flex-col items-center cursor-pointer">
+          <Upload size={40} className="text-gray-300 mb-2" />
+          <span className="text-xs font-black uppercase tracking-widest">Subir Foto Direto</span>
+          <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+            // Lógica simples de upload aqui
+          }} />
+        </label>
+      </div>
+
+      {/* Restante do seu código de produtos... */}
+    </div>
+  );
 }
