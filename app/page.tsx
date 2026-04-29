@@ -22,8 +22,25 @@ const CATEGORIAS_MAP: Record<string, string[]> = {
   FEMININO: ['calcinha', 'conjunto fitness', 'conjunto lingerie', 'legs calça', 'lingerie', 'pijama', 'sutiã'].sort(),
   MASCULINO: ['camiseta', 'cueca', 'pijama', 'shorts'].sort(),
   INFANTIL_MENINAS: ['calcinha', 'conjuntos', 'pijama'].sort(),
-  INFANTIL_MENINOS: ['conjuntos', 'cueca', 'pijama'].sort()
+  INFANTIL_MENOS: ['conjuntos', 'cueca', 'pijama'].sort()
 };
+
+function ImageCarousel({ images }: { images: string[] }) {
+  const [current, setCurrent] = useState(0);
+  if (!images || images.length === 0) return <img src="https://via.placeholder.com/600" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Sem imagem" />;
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <img src={images[current]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Produto" />
+      {images.length > 1 && (
+        <>
+          <button onClick={() => setCurrent(current > 0 ? current - 1 : images.length - 1)} style={{ position: 'absolute', left: '5px', top: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}>‹</button>
+          <button onClick={() => setCurrent(current < images.length - 1 ? current + 1 : 0)} style={{ position: 'absolute', right: '5px', top: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}>›</button>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function MabellenFinal() {
   const [products, setProducts] = useState<any[]>([]);
@@ -56,11 +73,6 @@ export default function MabellenFinal() {
     if (data) setProducts(data);
   }
 
-  const resetForm = () => {
-    setEditingId(null);
-    setProductForm({ nome: '', preco: '', genero: 'FEMININO', categoria: 'calcinha', fotos: [], estoque: {}, cores: '', ativo: true });
-  };
-
   const addToCart = (prod: any) => {
     const size = selectedSize[prod.id];
     const color = selectedColor[prod.id];
@@ -68,139 +80,68 @@ export default function MabellenFinal() {
 
     if (!size) return alert("Selecione um tamanho!");
 
-    const itemCarrinho = { 
-      idCarrinho: Date.now(), 
-      ...prod, 
-      tamanhoEscolhido: size,
-      corEscolhida: color || 'N/A',
-      quantidadeEscolhida: qty 
-    };
-
-    setCart([...cart, itemCarrinho]);
+    setCart([...cart, { idCarrinho: Date.now(), ...prod, tamanhoEscolhido: size, corEscolhida: color || 'N/A', quantidadeEscolhida: qty }]);
     setCartOpen(true);
   };
-
-  const totalCart = cart.reduce((acc, item) => acc + (item.preco * item.quantidadeEscolhida), 0);
-
-  async function handleFileUpload(e: any) {
-    try {
-      setUploading(true);
-      const files = Array.from(e.target.files);
-      const newPhotoUrls = [...(productForm.fotos || [])];
-
-      for (const file of files) {
-        const f = file as File;
-        const fileName = `${Date.now()}-${f.name}`;
-        await supabase.storage.from('mabellen-images').upload(fileName, f);
-        const { data: { publicUrl } } = supabase.storage.from('mabellen-images').getPublicUrl(fileName);
-        newPhotoUrls.push(publicUrl);
-      }
-      setProductForm({ ...productForm, fotos: newPhotoUrls });
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function handleSave() {
-    const { id, created_at, ...dadosBase } = productForm;
-    const payload = { ...dadosBase, preco: Number(productForm.preco) };
-
-    if (editingId) {
-      await supabase.from('produtos').update(payload).eq('id', editingId);
-    } else {
-      await supabase.from('produtos').insert([payload]);
-    }
-    setAdminOpen(false);
-    resetForm();
-    fetchProducts();
-  }
 
   const filtered = products.filter(p => p.genero === genderFilter && (subFilter === 'TODOS' || p.categoria === subFilter));
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff' }}>
+    <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@200;400;700&display=swap');
+        :root { --gold: #c9a96e; --bg: #fdfdfd; --text: #1a1a1a; }
+        body { margin: 0; font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--text); }
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 500; }
-        .logo { letter-spacing: 5px; font-weight: bold; text-transform: uppercase; font-size: 1.2rem; }
-        .logo span { color: #c9a96e; }
-        .nav-main { display: flex; justify-content: center; gap: 15px; padding: 15px; overflow-x: auto; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
-        .card { border: 1px solid #eee; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
-        .img-box { width: 100%; height: 350px; background: #f9f9f9; }
-        .img-box img { width: 100%; height: 100%; object-fit: cover; }
-        .btn-buy { width: 100%; background: #000; color: #fff; border: none; padding: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .opt-btn { border: 1px solid #ddd; background: #fff; padding: 5px 10px; margin: 2px; cursor: pointer; }
-        .opt-btn.active { background: #000; color: #fff; }
-        .drawer { position: fixed; right: -100%; top: 0; width: 100%; max-width: 400px; height: 100%; background: #fff; z-index: 1000; transition: 0.3s; padding: 20px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; }
+        .logo { font-family: 'Cinzel', serif; letter-spacing: 8px; font-weight: 700; text-transform: uppercase; font-size: 1.4rem; }
+        .logo span { color: var(--gold); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; padding: 20px 5%; }
+        .card { background: #fff; border-radius: 4px; border: 1px solid #f0f0f0; overflow: hidden; display: flex; flex-direction: column; }
+        .img-container { width: 100%; height: 400px; position: relative; }
+        .btn-buy { width: 100%; background: #000; color: #fff; border: none; padding: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+        .drawer { position: fixed; right: -100%; top: 0; width: 100%; max-width: 450px; height: 100%; background: #fff; z-index: 9999; transition: 0.4s; padding: 30px; overflow-y: auto; box-shadow: -5px 0 20px rgba(0,0,0,0.1); }
         .drawer.open { right: 0; }
       `}</style>
 
       <header>
-        <div onClick={() => { const p = prompt('Senha:'); if(p === '2004') setAdminOpen(true); }}>⚙️</div>
-        <div className="logo">MABE<span>LLEN</span></div>
+        <div style={{cursor:'pointer'}} onClick={() => prompt('Acesso:') === '2004' ? setAdminOpen(true) : null}>⚙️</div>
+        <h1 className="logo">MABE<span>LLEN</span></h1>
         <div onClick={() => setCartOpen(true)} style={{cursor:'pointer'}}>🛍️ ({cart.length})</div>
       </header>
 
-      <nav className="nav-main">
+      <nav style={{display:'flex', justifyContent:'center', gap:'20px', padding:'15px'}}>
         {Object.keys(CATEGORIAS_MAP).map(g => (
-          <button key={g} onClick={() => setGenderFilter(g)} style={{background: 'none', border: 'none', color: genderFilter === g ? '#000' : '#ccc', fontWeight: 'bold', cursor:'pointer', fontSize:'0.7rem'}}>
+          <button key={g} style={{background:'none', border:'none', cursor:'pointer', fontWeight: genderFilter === g ? 'bold' : 'normal', fontSize:'0.7rem'}} onClick={() => setGenderFilter(g)}>
             {g.replace('_', ' ')}
           </button>
         ))}
       </nav>
 
-      <div className="grid">
+      <main className="grid">
         {filtered.map(prod => (
           <div key={prod.id} className="card">
-            <div className="img-box">
-              <img src={prod.fotos?.[0] || 'https://via.placeholder.com/400'} alt={prod.nome} />
+            <div className="img-container">
+              <ImageCarousel images={prod.fotos} />
             </div>
-            <div style={{padding: '15px'}}>
-              <h3 style={{fontSize: '0.9rem', margin: '0 0 5px'}}>{prod.nome}</h3>
-              <p style={{fontWeight: 'bold', color: '#c9a96e'}}>{formatarMoeda(prod.preco)}</p>
-              
-              <div style={{marginTop:'10px'}}>
-                {TAMANHOS_OPCOES.filter(t => (prod.estoque?.[t] || 0) > 0).map(t => (
-                  <button key={t} className={`opt-btn ${selectedSize[prod.id] === t ? 'active' : ''}`} onClick={() => setSelectedSize({...selectedSize, [prod.id]: t})}>{t}</button>
-                ))}
-              </div>
-
-              <button className="btn-buy" onClick={() => addToCart(prod)}>ADICIONAR À BAG</button>
+            <div style={{padding: '15px', textAlign: 'center'}}>
+              <p style={{fontSize: '0.75rem', textTransform: 'uppercase', margin: '0 0 5px'}}>{prod.nome}</p>
+              <p style={{fontWeight: 'bold', color: 'var(--gold)'}}>{formatarMoeda(prod.preco)}</p>
+              <button className="btn-buy" onClick={() => addToCart(prod)}>Adicionar à Bag</button>
             </div>
           </div>
         ))}
-      </div>
+      </main>
 
-      {/* Carrinho */}
+      {/* Drawer Carrinho Simples */}
       <div className={`drawer ${cartOpen ? 'open' : ''}`}>
-        <h2>MINHA BAG</h2>
-        {cart.map((item, idx) => (
-          <div key={idx} style={{display:'flex', gap:'10px', marginBottom:'15px', borderBottom:'1px solid #eee', paddingBottom:'10px'}}>
-            <img src={item.fotos?.[0]} style={{width:'50px', height:'70px', objectFit:'cover'}} alt="" />
-            <div>
-              <p style={{fontSize:'0.8rem', margin:0}}>{item.nome}</p>
-              <p style={{fontSize:'0.7rem', color:'#666'}}>{item.tamanhoEscolhido} - {formatarMoeda(item.preco)}</p>
-            </div>
+        <h2 style={{fontFamily: 'Cinzel'}}>MINHA BAG</h2>
+        {cart.map((item, i) => (
+          <div key={i} style={{marginBottom:'10px', borderBottom:'1px solid #eee', paddingBottom:'10px'}}>
+            {item.nome} - {formatarMoeda(item.preco)}
           </div>
         ))}
-        <h3 style={{marginTop:'20px'}}>TOTAL: {formatarMoeda(totalCart)}</h3>
-        <button className="btn-buy" onClick={() => {
-          let msg = `*Pedido Mabellen*\n`;
-          cart.forEach(i => msg += `- ${i.nome} (${i.tamanhoEscolhido})\n`);
-          window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
-        }}>FINALIZAR NO WHATSAPP</button>
-        <button onClick={() => setCartOpen(false)} style={{width:'100%', marginTop:'10px', background:'none', border:'1px solid #eee', padding:'10px'}}>FECHAR</button>
+        <button className="btn-buy" onClick={() => setCartOpen(false)}>Fechar</button>
       </div>
-
-      {/* Admin */}
-      <div className={`drawer ${adminOpen ? 'open' : ''}`}>
-        <h2>ADMINISTRAÇÃO</h2>
-        <input style={{width:'100%', padding:'10px', marginBottom:'10px'}} placeholder="Nome" value={productForm.nome} onChange={e => setProductForm({...productForm, nome: e.target.value})} />
-        <input style={{width:'100%', padding:'10px', marginBottom:'10px'}} type="number" placeholder="Preço" value={productForm.preco} onChange={e => setProductForm({...productForm, preco: e.target.value})} />
-        <input type="file" multiple onChange={handleFileUpload} />
-        <button className="btn-buy" onClick={handleSave}>{uploading ? 'SUBINDO...' : 'SALVAR PRODUTO'}</button>
-        <button onClick={() => setAdminOpen(false)} style={{width:'100%', marginTop:'10px', background:'none', border:'1px solid #eee', padding:'10px'}}>SAIR</button>
-      </div>
-    </div>
+    </>
   );
 }
