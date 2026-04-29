@@ -12,6 +12,14 @@ const supabase = createClient(
 const TAMANHOS_OPCOES = ['P', 'M', 'G', 'GG', '48', '50', '52', 'UN'];
 const WHATSAPP_NUM = '5544998550741'; 
 
+// --- FUNÇÃO DE FORMATAÇÃO DE MOEDA ---
+const formatarMoeda = (valor: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(valor);
+};
+
 const CATEGORIAS_MAP: Record<string, string[]> = {
   FEMININO: ['calcinha', 'conjunto fitness', 'conjunto lingerie', 'legs calça', 'lingerie', 'pijama', 'sutiã'].sort(),
   MASCULINO: ['camiseta', 'cueca', 'pijama', 'shorts'].sort(),
@@ -61,6 +69,11 @@ export default function MabellenFinal() {
     fetchProducts();
   }, []);
 
+  // --- RESET DE FILTRO AO MUDAR GÊNERO ---
+  useEffect(() => {
+    setSubFilter('TODOS');
+  }, [genderFilter]);
+
   async function fetchProducts() {
     const { data, error } = await supabase.from('produtos').select('*').order('created_at', { ascending: false });
     if (data) setProducts(data);
@@ -103,9 +116,9 @@ export default function MabellenFinal() {
   const finalizarPedido = () => {
     let msg = `*NOVO PEDIDO - MABELLEN*\n\n`;
     cart.forEach(item => {
-      msg += `• ${item.quantidadeEscolhida}x ${item.nome} (${item.tamanhoEscolhido} - ${item.corEscolhida}) - R$ ${(item.preco * item.quantidadeEscolhida).toFixed(2)}\n`;
+      msg += `• ${item.quantidadeEscolhida}x ${item.nome} (${item.tamanhoEscolhido} - ${item.corEscolhida}) - ${formatarMoeda(item.preco * item.quantidadeEscolhida)}\n`;
     });
-    msg += `\n*TOTAL: R$ ${totalCart.toFixed(2)}*`;
+    msg += `\n*TOTAL: ${formatarMoeda(totalCart)}*`;
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
   };
 
@@ -246,7 +259,7 @@ export default function MabellenFinal() {
 
       <nav className="nav-main">
         {Object.keys(CATEGORIAS_MAP).map(g => (
-          <button key={g} style={{background:'none', border:'none', cursor:'pointer', fontWeight: genderFilter === g ? 'bold' : 'normal', color: genderFilter === g ? '#000' : '#ccc', textTransform: 'uppercase', fontSize: '0.7rem'}} onClick={() => { setGenderFilter(g); setSubFilter('TODOS'); }}>
+          <button key={g} style={{background:'none', border:'none', cursor:'pointer', fontWeight: genderFilter === g ? 'bold' : 'normal', color: genderFilter === g ? '#000' : '#ccc', textTransform: 'uppercase', fontSize: '0.7rem'}} onClick={() => setGenderFilter(g)}>
             {g.replace('_', ' ')}
           </button>
         ))}
@@ -261,7 +274,6 @@ export default function MabellenFinal() {
 
       <main className="grid">
         {filtered.map(prod => {
-          // Calcula se o produto está esgotado (soma de todos os estoques)
           const totalEstoque = Object.values(prod.estoque || {}).reduce((a: any, b: any) => a + b, 0);
           const esgotado = totalEstoque === 0;
 
@@ -278,7 +290,8 @@ export default function MabellenFinal() {
               </div>
               <div style={{padding: '15px', textAlign: 'center'}}>
                 <p style={{fontSize: '0.75rem', textTransform: 'uppercase', margin: '0 0 5px', color: '#666'}}>{prod.nome}</p>
-                <p style={{fontWeight: 'bold', color: 'var(--gold)', margin: '0 0 10px'}}>R$ {Number(prod.preco).toFixed(2)}</p>
+                {/* PREÇO FORMATADO AQUI */}
+                <p style={{fontWeight: 'bold', color: 'var(--gold)', margin: '0 0 10px'}}>{formatarMoeda(prod.preco)}</p>
 
                 {!esgotado && (
                   <>
@@ -334,7 +347,8 @@ export default function MabellenFinal() {
                   <button className="btn-buy" onClick={() => addToCart(prod)}>Adicionar à Bag</button>
                 )}
                 
-                <button className="btn-whatsapp" onClick={() => window.open(`https://wa.me/${WHATSAPP_NUM}?text=Olá! Gostaria de saber mais sobre o produto: ${prod.nome}`)}>
+                {/* WHATSAPP COM MENSAGEM AUTOMÁTICA */}
+                <button className="btn-whatsapp" onClick={() => window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent('Olá! Gostaria de saber mais sobre o produto: ' + prod.nome)}`)}>
                   <span>💬</span> Perguntar no Whats
                 </button>
               </div>
@@ -363,7 +377,7 @@ export default function MabellenFinal() {
                     <p style={{fontSize:'0.65rem', color:'#666', margin:'3px 0'}}>
                       Tam: {item.tamanhoEscolhido} | Cor: {item.corEscolhida} | Qtd: {item.quantidadeEscolhida}
                     </p>
-                    <p style={{fontSize:'0.75rem', fontWeight:'bold', color:'var(--gold)', margin:0}}>R$ {(item.preco * item.quantidadeEscolhida).toFixed(2)}</p>
+                    <p style={{fontSize:'0.75rem', fontWeight:'bold', color:'var(--gold)', margin:0}}>{formatarMoeda(item.preco * item.quantidadeEscolhida)}</p>
                   </div>
                   <button onClick={() => removeFromCart(item.idCarrinho)} style={{background:'none', border:'none', color:'red', cursor:'pointer', fontSize:'0.7rem'}}>REMOVER</button>
                 </div>
@@ -373,7 +387,7 @@ export default function MabellenFinal() {
             <div style={{marginTop:'30px', borderTop:'2px solid #1a1a1a', paddingTop:'20px'}}>
               <div style={{display:'flex', justifyContent:'space-between', fontWeight:'bold', fontSize:'1rem'}}>
                 <span>TOTAL:</span>
-                <span>R$ {totalCart.toFixed(2)}</span>
+                <span>{formatarMoeda(totalCart)}</span>
               </div>
               <button className="primary-btn" onClick={finalizarPedido}>FINALIZAR PEDIDO VIA WHATSAPP</button>
               <button onClick={() => setCartOpen(false)} style={{width:'100%', padding:'15px', background:'none', border:'none', color:'#999', cursor:'pointer', fontSize:'0.7rem'}}>CONTINUAR COMPRANDO</button>
@@ -420,7 +434,7 @@ export default function MabellenFinal() {
             {CATEGORIAS_MAP[productForm.genero].map(cat => <option key={cat} value={cat}>{cat.toUpperCase()}</option>)}
           </select>
 
-          <label>Estoque por Tamanho (Zere tudo para marcar como Esgotado)</label>
+          <label>Estoque por Tamanho</label>
           <div style={{background:'#f9f9f9', padding:'10px', borderRadius:'8px', border: '1px solid #eee'}}>
             {TAMANHOS_OPCOES.map(t => (
               <div key={t} className="stock-row">
@@ -447,7 +461,12 @@ export default function MabellenFinal() {
         </div>
       </div>
 
-      <a href={`https://wa.me/${WHATSAPP_NUM}`} target="_blank" style={{position:'fixed', bottom:'30px', left:'30px', background:'#25D366', color:'#fff', width:'50px', height:'50px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', textDecoration:'none', boxShadow:'0 4px 10px rgba(0,0,0,0.2)', zIndex:1000}}>
+      {/* BOTÃO FLUTUANTE COM MENSAGEM PADRÃO */}
+      <a 
+        href={`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent('Olá! Estou no site da Mabellen e gostaria de tirar uma dúvida.')}`} 
+        target="_blank" 
+        style={{position:'fixed', bottom:'30px', left:'30px', background:'#25D366', color:'#fff', width:'50px', height:'50px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', textDecoration:'none', boxShadow:'0 4px 10px rgba(0,0,0,0.2)', zIndex:1000}}
+      >
         💬
       </a>
     </>
