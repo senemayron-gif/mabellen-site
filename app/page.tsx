@@ -21,16 +21,27 @@ const CATEGORIAS_MAP: Record<string, string[]> = {
 
 function ImageCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
-  if (!images || images.length === 0) return <img src="https://via.placeholder.com/600" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Sem imagem" />;
+  
+  // AJUSTE DE PROPORÇÃO: Adicionado object-fit contain para não cortar detalhes da roupa
+  if (!images || images.length === 0) return <img src="https://via.placeholder.com/600" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Sem imagem" />;
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <img src={images[current]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Produto" />
+    <div style={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#fff' }}>
+      <img 
+        src={images[current]} 
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'contain', // Garante que a peça de roupa apareça inteira sem cortes desproporcionais
+          backgroundColor: '#fff' 
+        }} 
+        alt="Produto" 
+      />
       {images.length > 1 && (
         <>
-          <button onClick={() => setCurrent(current > 0 ? current - 1 : images.length - 1)} style={{ position: 'absolute', left: '5px', top: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}>‹</button>
-          <button onClick={() => setCurrent(current < images.length - 1 ? current + 1 : 0)} style={{ position: 'absolute', right: '5px', top: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}>›</button>
-          <div style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '12px', color: '#fff', fontWeight: 'bold', textShadow: '1px 1px 4px #000' }}>
+          <button onClick={() => setCurrent(current > 0 ? current - 1 : images.length - 1)} style={{ position: 'absolute', left: '5px', top: '50%', background: 'rgba(0,0,0,0.3)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}>‹</button>
+          <button onClick={() => setCurrent(current < images.length - 1 ? current + 1 : 0)} style={{ position: 'absolute', right: '5px', top: '50%', background: 'rgba(0,0,0,0.3)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}>›</button>
+          <div style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '11px', color: '#000', opacity: 0.5 }}>
             {current + 1} / {images.length}
           </div>
         </>
@@ -48,6 +59,7 @@ export default function MabellenFinal() {
   const [subFilter, setSubFilter] = useState('TODOS');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null); // Feedback de adição
 
   const [selectedSize, setSelectedSize] = useState<Record<string, string>>({});
   const [selectedColor, setSelectedColor] = useState<Record<string, string>>({});
@@ -80,6 +92,9 @@ export default function MabellenFinal() {
     if (!size) return alert("Por favor, selecione um tamanho!");
     if (prod.cores && prod.cores.trim() !== '' && !color) return alert("Por favor, selecione uma cor!");
 
+    // FEEDBACK VISUAL: Ativa o estado de carregamento no botão
+    setAddingId(prod.id);
+
     const itemCarrinho = { 
       idCarrinho: Date.now(), 
       ...prod, 
@@ -89,9 +104,14 @@ export default function MabellenFinal() {
     };
 
     setCart([...cart, itemCarrinho]);
-    setSelectedSize({ ...selectedSize, [prod.id]: '' });
-    setSelectedColor({ ...selectedColor, [prod.id]: '' });
-    setSelectedQty({ ...selectedQty, [prod.id]: 1 });
+
+    // Reseta o feedback após um pequeno intervalo
+    setTimeout(() => {
+        setAddingId(null);
+        setSelectedSize({ ...selectedSize, [prod.id]: '' });
+        setSelectedColor({ ...selectedColor, [prod.id]: '' });
+        setSelectedQty({ ...selectedQty, [prod.id]: 1 });
+    }, 600);
   };
 
   const removeFromCart = (idCarrinho: number) => {
@@ -211,7 +231,8 @@ export default function MabellenFinal() {
         .opt-btn.active { background: #000; color: #fff; border-color: #000; }
         
         .qty-input { width: 50px; padding: 5px; text-align: center; border: 1px solid #eee; font-size: 0.8rem; margin-left: 5px; }
-        .btn-buy { width: 100%; background: #000; color: #fff; border: none; padding: 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
+        .btn-buy { width: 100%; background: #000; color: #fff; border: none; padding: 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; transition: 0.2s; }
+        .btn-buy:active { background: var(--gold); }
         .btn-esgotado { width: 100%; background: #ccc; color: #666; border: none; padding: 12px; font-size: 0.7rem; font-weight: 700; cursor: not-allowed; text-transform: uppercase; margin-top: 10px; }
         .btn-whatsapp { width: 100%; background: #25D366; color: #fff; border: none; padding: 10px; font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
 
@@ -225,7 +246,7 @@ export default function MabellenFinal() {
         .danger-btn { width: 100%; padding: 12px; background: #fff; color: #ff4d4d; border: 1px solid #ff4d4d; font-weight: 700; cursor: pointer; border-radius: 4px; margin-top: 10px; text-transform: uppercase; font-size: 0.7rem; }
 
         .cart-item { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #eee; align-items: center; }
-        .cart-item img { width: 60px; height: 80px; object-fit: cover; border-radius: 4px; }
+        .cart-item img { width: 60px; height: 80px; object-fit: contain; background: #f9f9f9; border-radius: 4px; }
       `}</style>
 
       <header>
@@ -261,7 +282,6 @@ export default function MabellenFinal() {
 
       <main className="grid">
         {filtered.map(prod => {
-          // Calcula se o produto está esgotado (soma de todos os estoques)
           const totalEstoque = Object.values(prod.estoque || {}).reduce((a: any, b: any) => a + b, 0);
           const esgotado = totalEstoque === 0;
 
@@ -331,7 +351,12 @@ export default function MabellenFinal() {
                 {esgotado ? (
                   <button className="btn-esgotado">Esgotado</button>
                 ) : (
-                  <button className="btn-buy" onClick={() => addToCart(prod)}>Adicionar à Bag</button>
+                  <button 
+                    className="btn-buy" 
+                    onClick={() => addToCart(prod)}
+                  >
+                    {addingId === prod.id ? '✓ ADICIONADO' : 'Adicionar à Bag'}
+                  </button>
                 )}
                 
                 <button className="btn-whatsapp" onClick={() => window.open(`https://wa.me/${WHATSAPP_NUM}?text=Olá! Gostaria de saber mais sobre o produto: ${prod.nome}`)}>
