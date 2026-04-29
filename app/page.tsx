@@ -21,15 +21,39 @@ const CATEGORIAS_MAP: Record<string, string[]> = {
 
 function ImageCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
-  if (!images || images.length === 0) return <img src="https://via.placeholder.com/600" style={{ width: '100%', height: '100%', object-fit: contain }} alt="Sem imagem" />;
+  
+  // CORREÇÃO: Removido object-fit (erro de sintaxe) e aplicado objectFit como string
+  if (!images || images.length === 0) {
+    return (
+      <img 
+        src="https://via.placeholder.com/600" 
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+        alt="Sem imagem" 
+      />
+    );
+  }
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <img src={images[current]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Produto" />
+      <img 
+        src={images[current]} 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        alt="Produto" 
+      />
       {images.length > 1 && (
         <>
-          <button onClick={() => setCurrent(current > 0 ? current - 1 : images.length - 1)} style={{ position: 'absolute', left: '5px', top: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}>‹</button>
-          <button onClick={() => setCurrent(current < images.length - 1 ? current + 1 : 0)} style={{ position: 'absolute', right: '5px', top: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}>›</button>
+          <button 
+            onClick={() => setCurrent(current > 0 ? current - 1 : images.length - 1)} 
+            style={{ position: 'absolute', left: '5px', top: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}
+          >
+            ‹
+          </button>
+          <button 
+            onClick={() => setCurrent(current < images.length - 1 ? current + 1 : 0)} 
+            style={{ position: 'absolute', right: '5px', top: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', transform: 'translateY(-50%)' }}
+          >
+            ›
+          </button>
           <div style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '12px', color: '#fff', fontWeight: 'bold', textShadow: '1px 1px 4px #000' }}>
             {current + 1} / {images.length}
           </div>
@@ -92,6 +116,7 @@ export default function MabellenFinal() {
     setSelectedSize({ ...selectedSize, [prod.id]: '' });
     setSelectedColor({ ...selectedColor, [prod.id]: '' });
     setSelectedQty({ ...selectedQty, [prod.id]: 1 });
+    setCartOpen(true);
   };
 
   const removeFromCart = (idCarrinho: number) => {
@@ -202,7 +227,7 @@ export default function MabellenFinal() {
         .sub-btn { background: #fff; border: 1px solid #eee; padding: 6px 12px; font-size: 0.6rem; border-radius: 20px; cursor: pointer; color: #666; }
         .sub-btn.active { background: var(--text); color: #fff; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; padding: 20px 5%; }
-        .card { background: #fff; border-radius: 4px; border: 1px solid #f0f0f0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .card { background: #fff; border-radius: 4px; border: 1px solid #f0f0f0; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s; }
         .img-container { width: 100%; height: 400px; background: #fafafa; position: relative; }
         
         .selector-label { font-size: 0.6rem; color: #999; margin-bottom: 5px; text-transform: uppercase; display: block; font-weight: bold; }
@@ -213,7 +238,7 @@ export default function MabellenFinal() {
         .qty-input { width: 50px; padding: 5px; text-align: center; border: 1px solid #eee; font-size: 0.8rem; margin-left: 5px; }
         .btn-buy { width: 100%; background: #000; color: #fff; border: none; padding: 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
         .btn-esgotado { width: 100%; background: #ccc; color: #666; border: none; padding: 12px; font-size: 0.7rem; font-weight: 700; cursor: not-allowed; text-transform: uppercase; margin-top: 10px; }
-        .btn-whatsapp { width: 100%; background: #25D366; color: #fff; border: none; padding: 10px; font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-whatsapp { width: 100%; background: #25D366; color: #fff; border: none; padding: 10px; font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; text-decoration: none; }
 
         .drawer { position: fixed; right: -100%; top: 0; width: 100%; max-width: 450px; height: 100%; background: #fff; z-index: 9999; transition: 0.4s; padding: 30px; box-sizing: border-box; overflow-y: auto; box-shadow: -5px 0 20px rgba(0,0,0,0.1); }
         .drawer.open { right: 0; }
@@ -246,7 +271,11 @@ export default function MabellenFinal() {
 
       <nav className="nav-main">
         {Object.keys(CATEGORIAS_MAP).map(g => (
-          <button key={g} style={{background:'none', border:'none', cursor:'pointer', fontWeight: genderFilter === g ? 'bold' : 'normal', color: genderFilter === g ? '#000' : '#ccc', textTransform: 'uppercase', fontSize: '0.7rem'}} onClick={() => { setGenderFilter(g); setSubFilter('TODOS'); }}>
+          <button 
+            key={g} 
+            style={{background:'none', border:'none', cursor:'pointer', fontWeight: genderFilter === g ? 'bold' : 'normal', color: genderFilter === g ? '#000' : '#ccc', textTransform: 'uppercase', fontSize: '0.7rem'}} 
+            onClick={() => { setGenderFilter(g); setSubFilter('TODOS'); }}
+          >
             {g.replace('_', ' ')}
           </button>
         ))}
@@ -261,7 +290,6 @@ export default function MabellenFinal() {
 
       <main className="grid">
         {filtered.map(prod => {
-          // Calcula se o produto está esgotado (soma de todos os estoques)
           const totalEstoque = Object.values(prod.estoque || {}).reduce((a: any, b: any) => a + b, 0);
           const esgotado = totalEstoque === 0;
 
@@ -447,7 +475,7 @@ export default function MabellenFinal() {
         </div>
       </div>
 
-      <a href={`https://wa.me/${WHATSAPP_NUM}`} target="_blank" style={{position:'fixed', bottom:'30px', left:'30px', background:'#25D366', color:'#fff', width:'50px', height:'50px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', textDecoration:'none', boxShadow:'0 4px 10px rgba(0,0,0,0.2)', zIndex:1000}}>
+      <a href={`https://wa.me/${WHATSAPP_NUM}`} target="_blank" rel="noopener noreferrer" style={{position:'fixed', bottom:'30px', left:'30px', background:'#25D366', color:'#fff', width:'50px', height:'50px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', textDecoration:'none', boxShadow:'0 4px 10px rgba(0,0,0,0.2)', zIndex:1000}}>
         💬
       </a>
     </>
