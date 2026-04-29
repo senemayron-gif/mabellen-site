@@ -1,8 +1,17 @@
 {
-  "name": "Mabellen",
+  "name": "Mabellen Moda Intima",
   "short_name": "Mabellen",
+  "description": "Loja de Moda Íntima em Maringá",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000"
+  "background_color": "#fdfdfd",
+  "theme_color": "#c9a96e",
+  "icons": [
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
