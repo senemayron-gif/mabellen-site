@@ -22,7 +22,6 @@ const CATEGORIAS_MAP: Record<string, string[]> = {
 function ImageCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
   
-  // AJUSTE DE PROPORÇÃO: Adicionado object-fit contain para não cortar detalhes da roupa
   if (!images || images.length === 0) return <img src="https://via.placeholder.com/600" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Sem imagem" />;
 
   return (
@@ -32,7 +31,7 @@ function ImageCarousel({ images }: { images: string[] }) {
         style={{ 
           width: '100%', 
           height: '100%', 
-          objectFit: 'contain', // Garante que a peça de roupa apareça inteira sem cortes desproporcionais
+          objectFit: 'contain', 
           backgroundColor: '#fff' 
         }} 
         alt="Produto" 
@@ -54,12 +53,13 @@ export default function MabellenFinal() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false); // NOVO: Controla se o formulário aparece
   const [cartOpen, setCartOpen] = useState(false); 
   const [genderFilter, setGenderFilter] = useState('FEMININO');
   const [subFilter, setSubFilter] = useState('TODOS');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [addingId, setAddingId] = useState<string | null>(null); // Feedback de adição
+  const [addingId, setAddingId] = useState<string | null>(null); 
 
   const [selectedSize, setSelectedSize] = useState<Record<string, string>>({});
   const [selectedColor, setSelectedColor] = useState<Record<string, string>>({});
@@ -82,6 +82,7 @@ export default function MabellenFinal() {
   const resetForm = () => {
     setEditingId(null);
     setProductForm({ nome: '', preco: '', genero: 'FEMININO', categoria: 'calcinha', fotos: [], estoque: {}, cores: '', ativo: true });
+    setShowForm(false);
   };
 
   const addToCart = (prod: any) => {
@@ -92,7 +93,6 @@ export default function MabellenFinal() {
     if (!size) return alert("Por favor, selecione um tamanho!");
     if (prod.cores && prod.cores.trim() !== '' && !color) return alert("Por favor, selecione uma cor!");
 
-    // FEEDBACK VISUAL: Ativa o estado de carregamento no botão
     setAddingId(prod.id);
 
     const itemCarrinho = { 
@@ -105,7 +105,6 @@ export default function MabellenFinal() {
 
     setCart([...cart, itemCarrinho]);
 
-    // Reseta o feedback após um pequeno intervalo
     setTimeout(() => {
         setAddingId(null);
         setSelectedSize({ ...selectedSize, [prod.id]: '' });
@@ -174,7 +173,7 @@ export default function MabellenFinal() {
       if (res.error) throw res.error;
 
       alert("Produto salvo com sucesso!");
-      setAdminOpen(false);
+      setShowForm(false);
       resetForm();
       fetchProducts();
     } catch (error: any) {
@@ -191,7 +190,7 @@ export default function MabellenFinal() {
       if (error) throw error;
 
       alert("Produto excluído!");
-      setAdminOpen(false);
+      setShowForm(false);
       resetForm();
       fetchProducts();
     } catch (error: any) {
@@ -241,7 +240,6 @@ export default function MabellenFinal() {
         .admin-form label { display: block; font-size: 0.65rem; font-weight: 700; margin: 15px 0 5px; color: #999; text-transform: uppercase; }
         .admin-form input, .admin-form select, .admin-form textarea { width: 100%; padding: 10px; border: 1px solid #eee; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
         .stock-row { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid #f9f9f9; }
-        .btn-add-new { position: fixed; bottom: 30px; right: 30px; background: var(--gold); color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; border: none; cursor: pointer; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .primary-btn { width: 100%; padding: 18px; background: #1a1a1a; color: #fff; border: none; font-weight: 700; cursor: pointer; border-radius: 4px; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
         .danger-btn { width: 100%; padding: 12px; background: #fff; color: #ff4d4d; border: 1px solid #ff4d4d; font-weight: 700; cursor: pointer; border-radius: 4px; margin-top: 10px; text-transform: uppercase; font-size: 0.7rem; }
 
@@ -250,6 +248,7 @@ export default function MabellenFinal() {
       `}</style>
 
       <header>
+        {/* Agora abre o Admin mas NÃO abre o formulário direto */}
         <div style={{cursor:'pointer', padding: '10px'}} onClick={() => prompt('Acesso:') === '2004' ? setAdminOpen(true) : null}>⚙️</div>
         <h1 className="logo">MABE<span>LLEN</span></h1>
         
@@ -262,8 +261,6 @@ export default function MabellenFinal() {
           {cart.length > 0 && <span className="bag-badge">{cart.length}</span>}
         </div>
       </header>
-
-      {adminOpen && <button className="btn-add-new" onClick={() => { resetForm(); setAdminOpen(true); }}>+</button>}
 
       <nav className="nav-main">
         {Object.keys(CATEGORIAS_MAP).map(g => (
@@ -287,8 +284,9 @@ export default function MabellenFinal() {
 
           return (
             <div key={prod.id} className="card" style={{ opacity: esgotado ? 0.7 : 1 }}>
+              {/* Botão de edição que abre o formulário para editar */}
               {adminOpen && (
-                <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setAdminOpen(true); }} style={{position:'absolute', zIndex:10, margin:'10px', background:'#000', color:'#fff', border:'none', padding:'6px 10px', borderRadius:'4px', cursor:'pointer', fontSize:'0.7rem'}}>EDITAR</button>
+                <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setShowForm(true); setAdminOpen(true); }} style={{position:'absolute', zIndex:10, margin:'10px', background:'#000', color:'#fff', border:'none', padding:'6px 10px', borderRadius:'4px', cursor:'pointer', fontSize:'0.7rem'}}>EDITAR</button>
               )}
               <div className="img-container">
                 <ImageCarousel images={prod.fotos} />
@@ -407,69 +405,99 @@ export default function MabellenFinal() {
         )}
       </div>
 
-      {/* ADMIN */}
+      {/* ADMIN DRAWER */}
       <div className={`drawer ${adminOpen ? 'open' : ''}`}>
-        <h2 style={{fontFamily: 'Cinzel', fontSize: '1.2rem', borderBottom: '1px solid #eee', paddingBottom: '10px'}}>{editingId ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}</h2>
-        <div className="admin-form">
-          <label>Nome do Produto</label>
-          <input value={productForm.nome} onChange={e => setProductForm({...productForm, nome: e.target.value})} placeholder="Ex: Conjunto Renda Luxo" />
-          
-          <label>Preço (R$)</label>
-          <input type="number" value={productForm.preco} onChange={e => setProductForm({...productForm, preco: e.target.value})} placeholder="0.00" />
-
-          <label>Cores (Separadas por vírgula)</label>
-          <input value={productForm.cores} onChange={e => setProductForm({...productForm, cores: e.target.value})} placeholder="Ex: Preto, Branco, Vermelho" />
-
-          <label>Imagens ({productForm.fotos?.length || 0})</label>
-          <div style={{padding:'20px', border:'2px dashed #ddd', textAlign:'center', cursor:'pointer', borderRadius: '8px'}} onClick={() => !uploading && document.getElementById('file-input')?.click()}>
-            {uploading ? "SUBINDO FOTOS..." : "📸 CLIQUE PARA ADICIONAR FOTOS"}
-            <input id="file-input" type="file" multiple accept="image/*" hidden onChange={handleFileUpload} />
-          </div>
-          
-          <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap'}}>
-            {productForm.fotos?.map((url: string, i: number) => (
-              <div key={i} style={{position:'relative', width: '60px', height: '60px'}}>
-                <img src={url} style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:'4px'}} alt="" />
-                <button onClick={() => setProductForm({...productForm, fotos: productForm.fotos.filter((_:any,idx:any) => idx !== i)})} style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color:'#fff', border:'none', borderRadius:'50%', width:'20px', height:'20px', cursor:'pointer', fontSize: '10px'}}>X</button>
-              </div>
-            ))}
-          </div>
-
-          <label>Gênero</label>
-          <select value={productForm.genero} onChange={e => setProductForm({...productForm, genero: e.target.value, categoria: CATEGORIAS_MAP[e.target.value][0]})}>
-            {Object.keys(CATEGORIAS_MAP).map(g => <option key={g} value={g}>{g.replace('_', ' ')}</option>)}
-          </select>
-
-          <label>Categoria</label>
-          <select value={productForm.categoria} onChange={e => setProductForm({...productForm, categoria: e.target.value})}>
-            {CATEGORIAS_MAP[productForm.genero].map(cat => <option key={cat} value={cat}>{cat.toUpperCase()}</option>)}
-          </select>
-
-          <label>Estoque por Tamanho (Zere tudo para marcar como Esgotado)</label>
-          <div style={{background:'#f9f9f9', padding:'10px', borderRadius:'8px', border: '1px solid #eee'}}>
-            {TAMANHOS_OPCOES.map(t => (
-              <div key={t} className="stock-row">
-                <span style={{fontSize:'0.7rem', fontWeight:'bold'}}>{t}</span>
-                <input type="number" style={{width:'70px', padding:'5px'}} 
-                  value={productForm.estoque?.[t] || 0} 
-                  onChange={e => setProductForm({...productForm, estoque: {...productForm.estoque, [t]: parseInt(e.target.value) || 0}})} 
-                />
-              </div>
-            ))}
-          </div>
-
-          <button className="primary-btn" onClick={handleSave}>
-            {editingId ? 'SALVAR ALTERAÇÕES' : 'PUBLICAR NO SITE'}
-          </button>
-
-          {editingId && (
-            <button className="danger-btn" onClick={handleDelete}>
-              EXCLUIR PRODUTO DO SITE
-            </button>
-          )}
-          
-          <button onClick={() => { setAdminOpen(false); resetForm(); }} style={{width:'100%', padding: '15px', background: 'none', border: 'none', color: '#999', marginTop: '10px', cursor:'pointer', fontSize: '0.8rem', fontWeight: 'bold'}}>CANCELAR</button>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid #eee', paddingBottom:'15px'}}>
+          <h2 style={{fontFamily: 'Cinzel', fontSize: '1.2rem', margin:0}}>PAINEL ADMIN</h2>
+          <button onClick={() => { setAdminOpen(false); resetForm(); }} style={{background:'none', border:'none', fontSize:'1.2rem', cursor:'pointer'}}>✕</button>
         </div>
+
+        {!showForm ? (
+          /* MODO DE NAVEGAÇÃO/ESCOLHA */
+          <div style={{marginTop: '30px', textAlign: 'center'}}>
+            <p style={{fontSize: '0.8rem', color: '#666', marginBottom: '20px'}}>Você está no modo administrativo. Escolha uma opção ou feche este menu para navegar no site e editar produtos existentes.</p>
+            
+            <button 
+              className="primary-btn" 
+              style={{background: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}}
+              onClick={() => { resetForm(); setShowForm(true); }}
+            >
+              <span style={{fontSize: '24px'}}>+</span> NOVO PRODUTO
+            </button>
+
+            <button 
+              className="primary-btn" 
+              style={{background: '#000', marginTop: '15px'}}
+              onClick={() => setAdminOpen(false)}
+            >
+              VER / EDITAR PRODUTOS NO SITE
+            </button>
+          </div>
+        ) : (
+          /* MODO FORMULÁRIO (CADASTRO OU EDIÇÃO) */
+          <div className="admin-form">
+            <h3 style={{fontFamily: 'Cinzel', fontSize: '1rem', marginTop: '20px'}}>{editingId ? 'EDITAR PRODUTO' : 'CADASTRAR NOVO'}</h3>
+            
+            <label>Nome do Produto</label>
+            <input value={productForm.nome} onChange={e => setProductForm({...productForm, nome: e.target.value})} placeholder="Ex: Conjunto Renda Luxo" />
+            
+            <label>Preço (R$)</label>
+            <input type="number" value={productForm.preco} onChange={e => setProductForm({...productForm, preco: e.target.value})} placeholder="0.00" />
+
+            <label>Cores (Separadas por vírgula)</label>
+            <input value={productForm.cores} onChange={e => setProductForm({...productForm, cores: e.target.value})} placeholder="Ex: Preto, Branco, Vermelho" />
+
+            <label>Imagens ({productForm.fotos?.length || 0})</label>
+            <div style={{padding:'20px', border:'2px dashed #ddd', textAlign:'center', cursor:'pointer', borderRadius: '8px'}} onClick={() => !uploading && document.getElementById('file-input')?.click()}>
+              {uploading ? "SUBINDO FOTOS..." : "📸 CLIQUE PARA ADICIONAR FOTOS"}
+              <input id="file-input" type="file" multiple accept="image/*" hidden onChange={handleFileUpload} />
+            </div>
+            
+            <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap'}}>
+              {productForm.fotos?.map((url: string, i: number) => (
+                <div key={i} style={{position:'relative', width: '60px', height: '60px'}}>
+                  <img src={url} style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:'4px'}} alt="" />
+                  <button onClick={() => setProductForm({...productForm, fotos: productForm.fotos.filter((_:any,idx:any) => idx !== i)})} style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color:'#fff', border:'none', borderRadius:'50%', width:'20px', height:'20px', cursor:'pointer', fontSize: '10px'}}>X</button>
+                </div>
+              ))}
+            </div>
+
+            <label>Gênero</label>
+            <select value={productForm.genero} onChange={e => setProductForm({...productForm, genero: e.target.value, categoria: CATEGORIAS_MAP[e.target.value][0]})}>
+              {Object.keys(CATEGORIAS_MAP).map(g => <option key={g} value={g}>{g.replace('_', ' ')}</option>)}
+            </select>
+
+            <label>Categoria</label>
+            <select value={productForm.categoria} onChange={e => setProductForm({...productForm, categoria: e.target.value})}>
+              {CATEGORIAS_MAP[productForm.genero].map(cat => <option key={cat} value={cat}>{cat.toUpperCase()}</option>)}
+            </select>
+
+            <label>Estoque por Tamanho</label>
+            <div style={{background:'#f9f9f9', padding:'10px', borderRadius:'8px', border: '1px solid #eee'}}>
+              {TAMANHOS_OPCOES.map(t => (
+                <div key={t} className="stock-row">
+                  <span style={{fontSize:'0.7rem', fontWeight:'bold'}}>{t}</span>
+                  <input type="number" style={{width:'70px', padding:'5px'}} 
+                    value={productForm.estoque?.[t] || 0} 
+                    onChange={e => setProductForm({...productForm, estoque: {...productForm.estoque, [t]: parseInt(e.target.value) || 0}})} 
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button className="primary-btn" onClick={handleSave}>
+              {editingId ? 'SALVAR ALTERAÇÕES' : 'PUBLICAR NO SITE'}
+            </button>
+
+            {editingId && (
+              <button className="danger-btn" onClick={handleDelete}>
+                EXCLUIR PRODUTO DEFINITIVAMENTE
+              </button>
+            )}
+            
+            <button onClick={() => setShowForm(false)} style={{width:'100%', padding: '15px', background: 'none', border: 'none', color: '#999', marginTop: '10px', cursor:'pointer', fontSize: '0.8rem', fontWeight: 'bold'}}>VOLTAR AO MENU</button>
+          </div>
+        )}
       </div>
 
       <a href={`https://wa.me/${WHATSAPP_NUM}`} target="_blank" style={{position:'fixed', bottom:'30px', left:'30px', background:'#25D366', color:'#fff', width:'50px', height:'50px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', textDecoration:'none', boxShadow:'0 4px 10px rgba(0,0,0,0.2)', zIndex:1000}}>
