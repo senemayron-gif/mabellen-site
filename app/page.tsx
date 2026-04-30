@@ -9,14 +9,14 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const TAMANHOS_OPCOES = ['P', 'M', 'G', 'GG', '48', '50', '52', 'UN'];
+const TAMANHOS_OPCOES = ['P', 'M', 'G', 'GG', ]; 
 const WHATSAPP_NUM = '5544998550741'; 
 
 const CATEGORIAS_MAP: Record<string, string[]> = {
   FEMININO: ['calcinha', 'conjunto fitness', 'conjunto lingerie', 'legs calça', 'lingerie', 'pijama', 'sutiã'].sort(),
-  MASCULINO: ['camiseta', 'cueca', 'pijama', 'shorts'].sort(),
+  MASCULINO: ['camiseta', 'conjuntos', 'cueca', 'pijama', 'shorts'].sort(), 
   INFANTIL_MENINAS: ['calcinha', 'conjuntos', 'pijama'].sort(),
-  INFANTIL_MENOS: ['conjuntos', 'cueca', 'pijama'].sort()
+  INFANTIL_MENINOS: ['conjuntos', 'cueca', 'pijama'].sort() 
 };
 
 function ImageCarousel({ images }: { images: string[] }) {
@@ -81,9 +81,19 @@ export default function MabellenFinal() {
     nome: '', preco: '', genero: 'FEMININO', categoria: 'calcinha', fotos: [], estoque: {}, cores: '', ativo: true
   });
 
+  // CARREGAR CARRINHO SALVO AO ABRIR O APP
   useEffect(() => {
+    const savedCart = localStorage.getItem('mabellen_cart');
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
     fetchProducts();
   }, []);
+
+  // SALVAR NO LOCALSTORAGE SEMPRE QUE O CARRINHO MUDAR
+  useEffect(() => {
+    localStorage.setItem('mabellen_cart', JSON.stringify(cart));
+  }, [cart]);
 
   async function fetchProducts() {
     const { data, error } = await supabase.from('produtos').select('*').order('created_at', { ascending: false });
@@ -120,7 +130,8 @@ export default function MabellenFinal() {
         ...prod, 
         tamanhoEscolhido: size,
         corEscolhida: color,
-        quantidadeEscolhida: qty 
+        quantidadeEscolhida: qty,
+        selecionado: true // Novo campo para o Checkbox
       };
       setCart([...cart, itemCarrinho]);
     }
@@ -135,11 +146,25 @@ export default function MabellenFinal() {
     setCart(cart.filter(item => item.idCarrinho !== idCarrinho));
   };
 
-  const totalCart = cart.reduce((acc, item) => acc + (item.preco * item.quantidadeEscolhida), 0);
+  // FUNÇÃO PARA MARCAR/DESMARCAR ITEM NA SACOLA
+  const toggleSelection = (idCarrinho: number) => {
+    setCart(cart.map(item => 
+      item.idCarrinho === idCarrinho ? { ...item, selecionado: !item.selecionado } : item
+    ));
+  };
+
+  // TOTAL APENAS DOS ITENS MARCADOS (CHECKED)
+  const totalCart = cart.reduce((acc, item) => 
+    item.selecionado ? acc + (item.preco * item.quantidadeEscolhida) : acc
+  , 0);
 
   const finalizarPedido = () => {
+    const itensSelecionados = cart.filter(item => item.selecionado);
+    
+    if (itensSelecionados.length === 0) return alert("Selecione ao menos um item para comprar!");
+
     let msg = `*NOVO PEDIDO - MABELLEN*\n\n`;
-    cart.forEach(item => {
+    itensSelecionados.forEach(item => {
       msg += `• ${item.quantidadeEscolhida}x ${item.nome} (${item.tamanhoEscolhido} - ${item.corEscolhida}) - R$ ${(item.preco * item.quantidadeEscolhida).toFixed(2)}\n`;
     });
     msg += `\n*TOTAL: R$ ${totalCart.toFixed(2)}*`;
@@ -264,6 +289,8 @@ export default function MabellenFinal() {
 
         .cart-item { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #eee; align-items: center; }
         .cart-item img { width: 60px; height: 80px; object-fit: cover; border-radius: 4px; }
+        
+        .cart-checkbox { width: 20px; height: 20px; accent-color: var(--gold); cursor: pointer; }
       `}</style>
 
       <header>
@@ -375,7 +402,7 @@ export default function MabellenFinal() {
                 {esgotado ? (
                   <button className="btn-esgotado">Esgotado</button>
                 ) : (
-                  <button className="btn-buy" onClick={() => addToCart(prod)}>Adicionar à Bag</button>
+                  <button className="btn-buy" onClick={() => addToCart(prod)}>ADICIONAR A SACOLA</button>
                 )}
                 
                 <button className="btn-whatsapp" onClick={() => window.open(`https://wa.me/${WHATSAPP_NUM}?text=Olá! Gostaria de saber mais sobre o produto: ${prod.nome}`)}>
@@ -401,6 +428,12 @@ export default function MabellenFinal() {
             <div style={{marginTop:'20px'}}>
               {cart.map((item) => (
                 <div key={item.idCarrinho} className="cart-item">
+                  <input 
+                    type="checkbox" 
+                    className="cart-checkbox" 
+                    checked={item.selecionado} 
+                    onChange={() => toggleSelection(item.idCarrinho)} 
+                  />
                   <img src={item.fotos?.[0]} alt="" />
                   <div style={{flex:1}}>
                     <p style={{fontSize:'0.7rem', fontWeight:'bold', margin:0, textTransform:'uppercase'}}>{item.nome}</p>
@@ -416,7 +449,7 @@ export default function MabellenFinal() {
 
             <div style={{marginTop:'30px', borderTop:'2px solid #1a1a1a', paddingTop:'20px'}}>
               <div style={{display:'flex', justifyContent:'space-between', fontWeight:'bold', fontSize:'1rem'}}>
-                <span>TOTAL:</span>
+                <span>TOTAL SELECIONADO:</span>
                 <span>R$ {totalCart.toFixed(2)}</span>
               </div>
               <button className="primary-btn" onClick={finalizarPedido}>FINALIZAR PEDIDO VIA WHATSAPP</button>
