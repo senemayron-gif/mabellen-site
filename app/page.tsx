@@ -66,6 +66,7 @@ export default function MabellenFinal() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false); 
   const [genderFilter, setGenderFilter] = useState('FEMININO');
   const [subFilter, setSubFilter] = useState('TODOS');
@@ -190,7 +191,7 @@ export default function MabellenFinal() {
       if (res.error) throw res.error;
 
       alert("Produto salvo com sucesso!");
-      setAdminOpen(false);
+      setFormOpen(false);
       resetForm();
       fetchProducts();
     } catch (error: any) {
@@ -208,7 +209,7 @@ export default function MabellenFinal() {
       if (error) throw error;
 
       alert("Produto excluído!");
-      setAdminOpen(false);
+      setFormOpen(false);
       resetForm();
       fetchProducts();
     } catch (error: any) {
@@ -266,7 +267,7 @@ export default function MabellenFinal() {
       `}</style>
 
       <header>
-        <div style={{cursor:'pointer', padding: '10px'}} onClick={() => prompt('Acesso:') === '2004' ? setAdminOpen(true) : null}>⚙️</div>
+        <div style={{cursor:'pointer', padding: '10px'}} onClick={() => prompt('Acesso:') === '2004' ? setAdminOpen(!adminOpen) : null}>⚙️</div>
         <h1 className="logo">MABE<span>LLEN</span></h1>
         
         <div className="bag-container" onClick={() => setCartOpen(true)}>
@@ -279,7 +280,7 @@ export default function MabellenFinal() {
         </div>
       </header>
 
-      {adminOpen && <button className="btn-add-new" onClick={() => { resetForm(); setAdminOpen(true); }}>+</button>}
+      {adminOpen && <button className="btn-add-new" onClick={() => { resetForm(); setFormOpen(true); }}>+</button>}
 
       <nav className="nav-main">
         {Object.keys(CATEGORIAS_MAP).map(g => (
@@ -309,7 +310,7 @@ export default function MabellenFinal() {
             <div key={prod.id} className="card" style={{ opacity: esgotado ? 0.7 : 1 }}>
               {adminOpen && (
                 <>
-                  <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setAdminOpen(true); }} style={{position:'absolute', zIndex:10, top:'10px', left:'10px', background:'#000', color:'#fff', border:'none', padding:'6px 10px', borderRadius:'4px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>EDITAR</button>
+                  <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setFormOpen(true); }} style={{position:'absolute', zIndex:10, top:'10px', left:'10px', background:'#000', color:'#fff', border:'none', padding:'6px 10px', borderRadius:'4px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>EDITAR</button>
                   <button onClick={() => handleDelete(prod.id)} style={{position:'absolute', zIndex:10, top:'10px', right:'10px', background:'rgba(255,0,0,0.8)', color:'#fff', border:'none', padding:'6px 10px', borderRadius:'4px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>APAGAR</button>
                 </>
               )}
@@ -425,11 +426,11 @@ export default function MabellenFinal() {
         )}
       </div>
 
-      {/* ADMIN */}
-      <div className={`drawer ${adminOpen ? 'open' : ''}`}>
+      {/* ADMIN FORMULÁRIO */}
+      <div className={`drawer ${formOpen ? 'open' : ''}`}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px'}}>
           <h2 style={{fontFamily: 'Cinzel', fontSize: '1.2rem', margin:0}}>{editingId ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}</h2>
-          <button onClick={() => { setAdminOpen(false); resetForm(); }} style={{background:'#f0f0f0', border:'none', padding:'5px 15px', borderRadius:'20px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>FECHAR</button>
+          <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background:'#f0f0f0', border:'none', padding:'5px 15px', borderRadius:'20px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>FECHAR</button>
         </div>
 
         <div className="admin-form">
@@ -493,7 +494,7 @@ export default function MabellenFinal() {
             </button>
           )}
           
-          <button onClick={() => { setAdminOpen(false); resetForm(); }} style={{width:'100%', padding: '15px', background: 'none', border: 'none', color: '#999', marginTop: '10px', cursor:'pointer', fontSize: '0.8rem', fontWeight: 'bold'}}>CANCELAR</button>
+          <button onClick={() => { setFormOpen(false); resetForm(); }} style={{width:'100%', padding: '15px', background: 'none', border: 'none', color: '#999', marginTop: '10px', cursor:'pointer', fontSize: '0.8rem', fontWeight: 'bold'}}>CANCELAR</button>
         </div>
       </div>
 
