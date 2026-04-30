@@ -103,7 +103,6 @@ export default function MabellenFinal() {
     if (!size) return alert("Por favor, selecione um tamanho!");
     if (prod.cores && prod.cores.trim() !== '' && color === 'N/A') return alert("Por favor, selecione uma cor!");
 
-    // Logica de agrupamento
     const itemExistenteIndex = cart.findIndex(item => 
       item.id === prod.id && 
       item.tamanhoEscolhido === size && 
@@ -125,7 +124,6 @@ export default function MabellenFinal() {
       setCart([...cart, itemCarrinho]);
     }
 
-    // Reset selects
     setSelectedSize({ ...selectedSize, [prod.id]: '' });
     setSelectedColor({ ...selectedColor, [prod.id]: '' });
     setSelectedQty({ ...selectedQty, [prod.id]: 1 });
@@ -200,12 +198,13 @@ export default function MabellenFinal() {
     }
   }
 
-  async function handleDelete() {
-    if (!editingId) return;
+  async function handleDelete(id?: string) {
+    const targetId = id || editingId;
+    if (!targetId) return;
     if (!confirm("Tem certeza que deseja excluir este produto permanentemente?")) return;
 
     try {
-      const { error } = await supabase.from('produtos').delete().eq('id', editingId);
+      const { error } = await supabase.from('produtos').delete().eq('id', targetId);
       if (error) throw error;
 
       alert("Produto excluído!");
@@ -309,7 +308,10 @@ export default function MabellenFinal() {
           return (
             <div key={prod.id} className="card" style={{ opacity: esgotado ? 0.7 : 1 }}>
               {adminOpen && (
-                <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setAdminOpen(true); }} style={{position:'absolute', zIndex:10, margin:'10px', background:'#000', color:'#fff', border:'none', padding:'6px 10px', borderRadius:'4px', cursor:'pointer', fontSize:'0.7rem'}}>EDITAR</button>
+                <>
+                  <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setAdminOpen(true); }} style={{position:'absolute', zIndex:10, top:'10px', left:'10px', background:'#000', color:'#fff', border:'none', padding:'6px 10px', borderRadius:'4px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>EDITAR</button>
+                  <button onClick={() => handleDelete(prod.id)} style={{position:'absolute', zIndex:10, top:'10px', right:'10px', background:'rgba(255,0,0,0.8)', color:'#fff', border:'none', padding:'6px 10px', borderRadius:'4px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>APAGAR</button>
+                </>
               )}
               <div className="img-container">
                 <ImageCarousel images={prod.fotos} />
@@ -425,7 +427,11 @@ export default function MabellenFinal() {
 
       {/* ADMIN */}
       <div className={`drawer ${adminOpen ? 'open' : ''}`}>
-        <h2 style={{fontFamily: 'Cinzel', fontSize: '1.2rem', borderBottom: '1px solid #eee', paddingBottom: '10px'}}>{editingId ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}</h2>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px'}}>
+          <h2 style={{fontFamily: 'Cinzel', fontSize: '1.2rem', margin:0}}>{editingId ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}</h2>
+          <button onClick={() => { setAdminOpen(false); resetForm(); }} style={{background:'#f0f0f0', border:'none', padding:'5px 15px', borderRadius:'20px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>FECHAR</button>
+        </div>
+
         <div className="admin-form">
           <label>Nome do Produto</label>
           <input value={productForm.nome} onChange={e => setProductForm({...productForm, nome: e.target.value})} placeholder="Ex: Conjunto Renda Luxo" />
@@ -442,7 +448,6 @@ export default function MabellenFinal() {
             <input id="file-input" type="file" multiple accept="image/*" hidden onChange={handleFileUpload} />
           </div>
           
-          {/* LISTA DE FOTOS COM BOTÃO DE EXCLUIR */}
           <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap'}}>
             {productForm.fotos?.map((url: string, i: number) => (
               <div key={i} style={{position:'relative', width: '60px', height: '60px'}}>
@@ -483,7 +488,7 @@ export default function MabellenFinal() {
           </button>
 
           {editingId && (
-            <button className="danger-btn" onClick={handleDelete}>
+            <button className="danger-btn" onClick={() => handleDelete()}>
               EXCLUIR PRODUTO DO SITE
             </button>
           )}
