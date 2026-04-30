@@ -295,15 +295,7 @@ export default function MabellenFinal() {
 
       <header>
         <div style={{cursor:'pointer', padding: '10px'}} onClick={() => prompt('Acesso:') === '2004' ? setAdminOpen(!adminOpen) : null}>⚙️</div>
-        
-        {/* Substituindo o texto pela sua Logo */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <img 
-            src="COLE_AQUI_O_LINK_DA_SUA_LOGO" 
-            alt="Mabellen Logo" 
-            style={{ height: '60px', width: 'auto', objectFit: 'contain' }} 
-          />
-        </div>
+        <h1 className="logo">MABE<span>LLEN</span></h1>
         
         <div className="bag-container" onClick={() => setCartOpen(true)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
