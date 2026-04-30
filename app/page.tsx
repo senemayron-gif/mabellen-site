@@ -76,14 +76,12 @@ export default function MabellenFinal() {
   const [selectedSize, setSelectedSize] = useState<Record<string, string>>({});
   const [selectedColor, setSelectedColor] = useState<Record<string, string>>({});
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
-  
-  // ESTADO PARA A MENSAGEM PERSONALIZADA
-  const [duvidaCliente, setDuvidaCliente] = useState<Record<string, string>>({});
 
   const [productForm, setProductForm] = useState<any>({
     nome: '', preco: '', genero: 'FEMININO', categoria: 'calcinha', fotos: [], estoque: {}, cores: '', ativo: true
   });
 
+  // CARREGAR CARRINHO SALVO AO ABRIR O APP
   useEffect(() => {
     const savedCart = localStorage.getItem('mabellen_cart');
     if (savedCart) {
@@ -92,6 +90,7 @@ export default function MabellenFinal() {
     fetchProducts();
   }, []);
 
+  // SALVAR NO LOCALSTORAGE SEMPRE QUE O CARRINHO MUDAR
   useEffect(() => {
     localStorage.setItem('mabellen_cart', JSON.stringify(cart));
   }, [cart]);
@@ -132,7 +131,7 @@ export default function MabellenFinal() {
         tamanhoEscolhido: size,
         corEscolhida: color,
         quantidadeEscolhida: qty,
-        selecionado: true
+        selecionado: true // Novo campo para o Checkbox
       };
       setCart([...cart, itemCarrinho]);
     }
@@ -147,18 +146,21 @@ export default function MabellenFinal() {
     setCart(cart.filter(item => item.idCarrinho !== idCarrinho));
   };
 
+  // FUNÇÃO PARA MARCAR/DESMARCAR ITEM NA SACOLA
   const toggleSelection = (idCarrinho: number) => {
     setCart(cart.map(item => 
       item.idCarrinho === idCarrinho ? { ...item, selecionado: !item.selecionado } : item
     ));
   };
 
+  // TOTAL APENAS DOS ITENS MARCADOS (CHECKED)
   const totalCart = cart.reduce((acc, item) => 
     item.selecionado ? acc + (item.preco * item.quantidadeEscolhida) : acc
   , 0);
 
   const finalizarPedido = () => {
     const itensSelecionados = cart.filter(item => item.selecionado);
+    
     if (itensSelecionados.length === 0) return alert("Selecione ao menos um item para comprar!");
 
     let msg = `*NOVO PEDIDO - MABELLEN*\n\n`;
@@ -212,6 +214,7 @@ export default function MabellenFinal() {
       }
 
       if (res.error) throw res.error;
+
       alert("Produto salvo com sucesso!");
       setFormOpen(false);
       resetForm();
@@ -229,6 +232,7 @@ export default function MabellenFinal() {
     try {
       const { error } = await supabase.from('produtos').delete().eq('id', targetId);
       if (error) throw error;
+
       alert("Produto excluído!");
       setFormOpen(false);
       resetForm();
@@ -251,8 +255,11 @@ export default function MabellenFinal() {
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 500; }
         .logo { font-family: 'Cinzel', serif; letter-spacing: 8px; font-weight: 700; text-transform: uppercase; margin: 0; font-size: 1.4rem; }
         .logo span { color: var(--gold); }
+        
         .bag-container { position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 45px; height: 45px; transition: 0.3s; }
+        .bag-container:hover { transform: scale(1.1); }
         .bag-badge { position: absolute; top: 5px; right: 2px; background: var(--gold); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
         .nav-main { display: flex; justify-content: center; gap: 20px; padding: 15px; background: #fff; border-bottom: 1px solid #f9f9f9; }
         .sub-nav { display: flex; justify-content: center; gap: 10px; padding: 10px; flex-wrap: wrap; }
         .sub-btn { background: #fff; border: 1px solid #eee; padding: 6px 12px; font-size: 0.6rem; border-radius: 20px; cursor: pointer; color: #666; }
@@ -260,15 +267,17 @@ export default function MabellenFinal() {
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; padding: 20px 5%; }
         .card { background: #fff; border-radius: 4px; border: 1px solid #f0f0f0; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s; }
         .img-container { width: 100%; height: 400px; background: #fafafa; position: relative; }
+        
         .selector-label { font-size: 0.6rem; color: #999; margin-bottom: 5px; text-transform: uppercase; display: block; font-weight: bold; }
         .options-container { display: flex; justify-content: center; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
         .opt-btn { border: 1px solid #ddd; background: #fff; padding: 4px 8px; font-size: 0.65rem; cursor: pointer; min-width: 30px; border-radius: 2px; }
         .opt-btn.active { background: #000; color: #fff; border-color: #000; }
+        
         .qty-input { width: 50px; padding: 5px; text-align: center; border: 1px solid #eee; font-size: 0.8rem; margin-left: 5px; }
         .btn-buy { width: 100%; background: #000; color: #fff; border: none; padding: 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
         .btn-esgotado { width: 100%; background: #ccc; color: #666; border: none; padding: 12px; font-size: 0.7rem; font-weight: 700; cursor: not-allowed; text-transform: uppercase; margin-top: 10px; }
-        .btn-whatsapp { width: 100%; background: #25D366; color: #fff; border: none; padding: 10px; font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; text-decoration: none; border-radius: 4px; }
-        .input-duvida { width: 100%; padding: 8px; font-size: 0.7rem; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px; font-family: inherit; box-sizing: border-box; }
+        .btn-whatsapp { width: 100%; background: #25D366; color: #fff; border: none; padding: 10px; font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; text-decoration: none; }
+
         .drawer { position: fixed; right: -100%; top: 0; width: 100%; max-width: 450px; height: 100%; background: #fff; z-index: 9999; transition: 0.4s; padding: 30px; box-sizing: border-box; overflow-y: auto; box-shadow: -5px 0 20px rgba(0,0,0,0.1); }
         .drawer.open { right: 0; }
         .admin-form label { display: block; font-size: 0.65rem; font-weight: 700; margin: 15px 0 5px; color: #999; text-transform: uppercase; }
@@ -277,14 +286,17 @@ export default function MabellenFinal() {
         .btn-add-new { position: fixed; bottom: 30px; right: 30px; background: var(--gold); color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; border: none; cursor: pointer; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .primary-btn { width: 100%; padding: 18px; background: #1a1a1a; color: #fff; border: none; font-weight: 700; cursor: pointer; border-radius: 4px; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
         .danger-btn { width: 100%; padding: 12px; background: #fff; color: #ff4d4d; border: 1px solid #ff4d4d; font-weight: 700; cursor: pointer; border-radius: 4px; margin-top: 10px; text-transform: uppercase; font-size: 0.7rem; }
+
         .cart-item { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #eee; align-items: center; }
         .cart-item img { width: 60px; height: 80px; object-fit: cover; border-radius: 4px; }
+        
         .cart-checkbox { width: 20px; height: 20px; accent-color: var(--gold); cursor: pointer; }
       `}</style>
 
       <header>
         <div style={{cursor:'pointer', padding: '10px'}} onClick={() => prompt('Acesso:') === '2004' ? setAdminOpen(!adminOpen) : null}>⚙️</div>
         <h1 className="logo">MABE<span>LLEN</span></h1>
+        
         <div className="bag-container" onClick={() => setCartOpen(true)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
@@ -299,7 +311,11 @@ export default function MabellenFinal() {
 
       <nav className="nav-main">
         {Object.keys(CATEGORIAS_MAP).map(g => (
-          <button key={g} style={{background:'none', border:'none', cursor:'pointer', fontWeight: genderFilter === g ? 'bold' : 'normal', color: genderFilter === g ? '#000' : '#ccc', textTransform: 'uppercase', fontSize: '0.7rem'}} onClick={() => { setGenderFilter(g); setSubFilter('TODOS'); }}>
+          <button 
+            key={g} 
+            style={{background:'none', border:'none', cursor:'pointer', fontWeight: genderFilter === g ? 'bold' : 'normal', color: genderFilter === g ? '#000' : '#ccc', textTransform: 'uppercase', fontSize: '0.7rem'}} 
+            onClick={() => { setGenderFilter(g); setSubFilter('TODOS'); }}
+          >
             {g.replace('_', ' ')}
           </button>
         ))}
@@ -340,7 +356,11 @@ export default function MabellenFinal() {
                     <span className="selector-label">Tamanho</span>
                     <div className="options-container">
                       {TAMANHOS_OPCOES.filter(t => (prod.estoque?.[t] || 0) > 0).map(t => (
-                          <button key={t} className={`opt-btn ${selectedSize[prod.id] === t ? 'active' : ''}`} onClick={() => setSelectedSize({...selectedSize, [prod.id]: t})}>
+                          <button 
+                            key={t}
+                            className={`opt-btn ${selectedSize[prod.id] === t ? 'active' : ''}`}
+                            onClick={() => setSelectedSize({...selectedSize, [prod.id]: t})}
+                          >
                             {t}
                           </button>
                       ))}
@@ -351,12 +371,30 @@ export default function MabellenFinal() {
                         <span className="selector-label">Cor</span>
                         <div className="options-container">
                           {prod.cores.split(',').map((c: string) => (
-                            <button key={c} className={`opt-btn ${selectedColor[prod.id] === c.trim() ? 'active' : ''}`} onClick={() => setSelectedColor({...selectedColor, [prod.id]: c.trim()})}>
+                            <button 
+                              key={c}
+                              className={`opt-btn ${selectedColor[prod.id] === c.trim() ? 'active' : ''}`}
+                              onClick={() => setSelectedColor({...selectedColor, [prod.id]: c.trim()})}
+                            >
                               {c.trim()}
                             </button>
                           ))}
                         </div>
                       </>
+                    )}
+
+                    {selectedSize[prod.id] && (
+                      <div style={{fontSize:'0.65rem', marginBottom:'10px'}}>
+                        Qtd: 
+                        <input 
+                          type="number" 
+                          className="qty-input"
+                          min="1" 
+                          max={prod.estoque[selectedSize[prod.id]]} 
+                          value={selectedQty[prod.id] || 1}
+                          onChange={(e) => setSelectedQty({...selectedQty, [prod.id]: parseInt(e.target.value)})}
+                        />
+                      </div>
                     )}
                   </>
                 )}
@@ -367,22 +405,7 @@ export default function MabellenFinal() {
                   <button className="btn-buy" onClick={() => addToCart(prod)}>ADICIONAR A SACOLA</button>
                 )}
                 
-                {/* NOVO CAMPO DE DÚVIDA */}
-                <input 
-                  type="text" 
-                  className="input-duvida" 
-                  placeholder="Sua dúvida (ex: Tem outras cores?)" 
-                  value={duvidaCliente[prod.id] || ''}
-                  onChange={(e) => setDuvidaCliente({...duvidaCliente, [prod.id]: e.target.value})}
-                />
-                
-                <button 
-                  className="btn-whatsapp" 
-                  onClick={() => {
-                    const extra = duvidaCliente[prod.id] ? `\n\n*Minha dúvida:* ${duvidaCliente[prod.id]}` : '';
-                    window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(`Olá! Gostaria de saber mais sobre o produto: ${prod.nome}${extra}`)}`);
-                  }}
-                >
+                <button className="btn-whatsapp" onClick={() => window.open(`https://wa.me/${WHATSAPP_NUM}?text=Olá! Gostaria de saber mais sobre o produto: ${prod.nome}`)}>
                   <span>💬</span> Perguntar no Whats
                 </button>
               </div>
@@ -391,12 +414,13 @@ export default function MabellenFinal() {
         })}
       </main>
 
-      {/* CARRINHO E ADMIN FORMULÁRIO (MANTIDOS IGUAIS) */}
+      {/* CARRINHO */}
       <div className={`drawer ${cartOpen ? 'open' : ''}`}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid #eee', paddingBottom:'15px'}}>
           <h2 style={{fontFamily: 'Cinzel', fontSize: '1.2rem', margin:0}}>MINHA BAG</h2>
           <button onClick={() => setCartOpen(false)} style={{background:'none', border:'none', fontSize:'1.2rem', cursor:'pointer'}}>✕</button>
         </div>
+
         {cart.length === 0 ? (
           <p style={{textAlign:'center', marginTop:'50px', color:'#999', fontSize:'0.8rem'}}>Sua bag está vazia.</p>
         ) : (
@@ -404,46 +428,106 @@ export default function MabellenFinal() {
             <div style={{marginTop:'20px'}}>
               {cart.map((item) => (
                 <div key={item.idCarrinho} className="cart-item">
-                  <input type="checkbox" className="cart-checkbox" checked={item.selecionado} onChange={() => toggleSelection(item.idCarrinho)} />
+                  <input 
+                    type="checkbox" 
+                    className="cart-checkbox" 
+                    checked={item.selecionado} 
+                    onChange={() => toggleSelection(item.idCarrinho)} 
+                  />
                   <img src={item.fotos?.[0]} alt="" />
                   <div style={{flex:1}}>
                     <p style={{fontSize:'0.7rem', fontWeight:'bold', margin:0, textTransform:'uppercase'}}>{item.nome}</p>
-                    <p style={{fontSize:'0.65rem', color:'#666', margin:'3px 0'}}>Tam: {item.tamanhoEscolhido} | Cor: {item.corEscolhida} | Qtd: {item.quantidadeEscolhida}</p>
+                    <p style={{fontSize:'0.65rem', color:'#666', margin:'3px 0'}}>
+                      Tam: {item.tamanhoEscolhido} | Cor: {item.corEscolhida} | Qtd: {item.quantidadeEscolhida}
+                    </p>
                     <p style={{fontSize:'0.75rem', fontWeight:'bold', color:'var(--gold)', margin:0}}>R$ {(item.preco * item.quantidadeEscolhida).toFixed(2)}</p>
                   </div>
                   <button onClick={() => removeFromCart(item.idCarrinho)} style={{background:'none', border:'none', color:'red', cursor:'pointer', fontSize:'0.7rem'}}>REMOVER</button>
                 </div>
               ))}
             </div>
+
             <div style={{marginTop:'30px', borderTop:'2px solid #1a1a1a', paddingTop:'20px'}}>
               <div style={{display:'flex', justifyContent:'space-between', fontWeight:'bold', fontSize:'1rem'}}>
                 <span>TOTAL SELECIONADO:</span>
                 <span>R$ {totalCart.toFixed(2)}</span>
               </div>
               <button className="primary-btn" onClick={finalizarPedido}>FINALIZAR PEDIDO VIA WHATSAPP</button>
+              <button onClick={() => setCartOpen(false)} style={{width:'100%', padding:'15px', background:'none', border:'none', color:'#999', cursor:'pointer', fontSize:'0.7rem'}}>CONTINUAR COMPRANDO</button>
             </div>
           </>
         )}
       </div>
 
+      {/* ADMIN FORMULÁRIO */}
       <div className={`drawer ${formOpen ? 'open' : ''}`}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px'}}>
           <h2 style={{fontFamily: 'Cinzel', fontSize: '1.2rem', margin:0}}>{editingId ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}</h2>
           <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background:'#f0f0f0', border:'none', padding:'5px 15px', borderRadius:'20px', cursor:'pointer', fontSize:'0.7rem', fontWeight:'bold'}}>FECHAR</button>
         </div>
+
         <div className="admin-form">
           <label>Nome do Produto</label>
-          <input value={productForm.nome} onChange={e => setProductForm({...productForm, nome: e.target.value})} />
+          <input value={productForm.nome} onChange={e => setProductForm({...productForm, nome: e.target.value})} placeholder="Ex: Conjunto Renda Luxo" />
+          
           <label>Preço (R$)</label>
-          <input type="number" value={productForm.preco} onChange={e => setProductForm({...productForm, preco: e.target.value})} />
-          <label>Cores</label>
-          <input value={productForm.cores} onChange={e => setProductForm({...productForm, cores: e.target.value})} placeholder="Separadas por vírgula" />
-          <label>Imagens</label>
-          <div style={{padding:'20px', border:'2px dashed #ddd', textAlign:'center', cursor:'pointer'}} onClick={() => !uploading && document.getElementById('file-input')?.click()}>
-            {uploading ? "SUBINDO..." : "📸 ADICIONAR FOTOS"}
+          <input type="number" value={productForm.preco} onChange={e => setProductForm({...productForm, preco: e.target.value})} placeholder="0.00" />
+
+          <label>Cores (Separadas por vírgula)</label>
+          <input value={productForm.cores} onChange={e => setProductForm({...productForm, cores: e.target.value})} placeholder="Ex: Preto, Branco, Vermelho" />
+
+          <label>Imagens ({productForm.fotos?.length || 0})</label>
+          <div style={{padding:'20px', border:'2px dashed #ddd', textAlign:'center', cursor:'pointer', borderRadius: '8px'}} onClick={() => !uploading && document.getElementById('file-input')?.click()}>
+            {uploading ? "SUBINDO FOTOS..." : "📸 CLIQUE PARA ADICIONAR FOTOS"}
             <input id="file-input" type="file" multiple accept="image/*" hidden onChange={handleFileUpload} />
           </div>
-          <button className="primary-btn" onClick={handleSave}>SALVAR PRODUTO</button>
+          
+          <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap'}}>
+            {productForm.fotos?.map((url: string, i: number) => (
+              <div key={i} style={{position:'relative', width: '60px', height: '60px'}}>
+                <img src={url} style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:'4px'}} alt="" />
+                <button 
+                  onClick={() => setProductForm({...productForm, fotos: productForm.fotos.filter((_:any,idx:any) => idx !== i)})} 
+                  style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color:'#fff', border:'none', borderRadius:'50%', width:'20px', height:'20px', cursor:'pointer', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'}}
+                >X</button>
+              </div>
+            ))}
+          </div>
+
+          <label>Gênero</label>
+          <select value={productForm.genero} onChange={e => setProductForm({...productForm, genero: e.target.value, categoria: CATEGORIAS_MAP[e.target.value][0]})}>
+            {Object.keys(CATEGORIAS_MAP).map(g => <option key={g} value={g}>{g.replace('_', ' ')}</option>)}
+          </select>
+
+          <label>Categoria</label>
+          <select value={productForm.categoria} onChange={e => setProductForm({...productForm, categoria: e.target.value})}>
+            {CATEGORIAS_MAP[productForm.genero].map(cat => <option key={cat} value={cat}>{cat.toUpperCase()}</option>)}
+          </select>
+
+          <label>Estoque por Tamanho</label>
+          <div style={{background:'#f9f9f9', padding:'10px', borderRadius:'8px', border: '1px solid #eee'}}>
+            {TAMANHOS_OPCOES.map(t => (
+              <div key={t} className="stock-row">
+                <span style={{fontSize:'0.7rem', fontWeight:'bold'}}>{t}</span>
+                <input type="number" style={{width:'70px', padding:'5px'}} 
+                  value={productForm.estoque?.[t] || 0} 
+                  onChange={e => setProductForm({...productForm, estoque: {...productForm.estoque, [t]: parseInt(e.target.value) || 0}})} 
+                />
+              </div>
+            ))}
+          </div>
+
+          <button className="primary-btn" onClick={handleSave}>
+            {editingId ? 'SALVAR ALTERAÇÕES' : 'PUBLICAR NO SITE'}
+          </button>
+
+          {editingId && (
+            <button className="danger-btn" onClick={() => handleDelete()}>
+              EXCLUIR PRODUTO DO SITE
+            </button>
+          )}
+          
+          <button onClick={() => { setFormOpen(false); resetForm(); }} style={{width:'100%', padding: '15px', background: 'none', border: 'none', color: '#999', marginTop: '10px', cursor:'pointer', fontSize: '0.8rem', fontWeight: 'bold'}}>CANCELAR</button>
         </div>
       </div>
 
