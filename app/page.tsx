@@ -22,7 +22,6 @@ const CATEGORIAS_MAP: Record<string, string[]> = {
 function ImageCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
   
-  // CORREÇÃO: Removido object-fit (erro de sintaxe) e aplicado objectFit como string
   if (!images || images.length === 0) {
     return (
       <img 
@@ -98,21 +97,35 @@ export default function MabellenFinal() {
 
   const addToCart = (prod: any) => {
     const size = selectedSize[prod.id];
-    const color = selectedColor[prod.id];
+    const color = selectedColor[prod.id] || 'N/A';
     const qty = selectedQty[prod.id] || 1;
 
     if (!size) return alert("Por favor, selecione um tamanho!");
-    if (prod.cores && prod.cores.trim() !== '' && !color) return alert("Por favor, selecione uma cor!");
+    if (prod.cores && prod.cores.trim() !== '' && color === 'N/A') return alert("Por favor, selecione uma cor!");
 
-    const itemCarrinho = { 
-      idCarrinho: Date.now(), 
-      ...prod, 
-      tamanhoEscolhido: size,
-      corEscolhida: color || 'N/A',
-      quantidadeEscolhida: qty 
-    };
+    // Logica de agrupamento
+    const itemExistenteIndex = cart.findIndex(item => 
+      item.id === prod.id && 
+      item.tamanhoEscolhido === size && 
+      item.corEscolhida === color
+    );
 
-    setCart([...cart, itemCarrinho]);
+    if (itemExistenteIndex !== -1) {
+      const novoCarrinho = [...cart];
+      novoCarrinho[itemExistenteIndex].quantidadeEscolhida += qty;
+      setCart(novoCarrinho);
+    } else {
+      const itemCarrinho = { 
+        idCarrinho: Date.now(), 
+        ...prod, 
+        tamanhoEscolhido: size,
+        corEscolhida: color,
+        quantidadeEscolhida: qty 
+      };
+      setCart([...cart, itemCarrinho]);
+    }
+
+    // Reset selects
     setSelectedSize({ ...selectedSize, [prod.id]: '' });
     setSelectedColor({ ...selectedColor, [prod.id]: '' });
     setSelectedQty({ ...selectedQty, [prod.id]: 1 });
@@ -263,7 +276,7 @@ export default function MabellenFinal() {
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <path d="M16 10a4 4 0 0 1-8 0"></path>
           </svg>
-          {cart.length > 0 && <span className="bag-badge">{cart.length}</span>}
+          {cart.length > 0 && <span className="bag-badge">{cart.reduce((a, b) => a + b.quantidadeEscolhida, 0)}</span>}
         </div>
       </header>
 
@@ -429,11 +442,15 @@ export default function MabellenFinal() {
             <input id="file-input" type="file" multiple accept="image/*" hidden onChange={handleFileUpload} />
           </div>
           
+          {/* LISTA DE FOTOS COM BOTÃO DE EXCLUIR */}
           <div style={{display:'flex', gap:'8px', marginTop:'10px', flexWrap:'wrap'}}>
             {productForm.fotos?.map((url: string, i: number) => (
               <div key={i} style={{position:'relative', width: '60px', height: '60px'}}>
                 <img src={url} style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:'4px'}} alt="" />
-                <button onClick={() => setProductForm({...productForm, fotos: productForm.fotos.filter((_:any,idx:any) => idx !== i)})} style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color:'#fff', border:'none', borderRadius:'50%', width:'20px', height:'20px', cursor:'pointer', fontSize: '10px'}}>X</button>
+                <button 
+                  onClick={() => setProductForm({...productForm, fotos: productForm.fotos.filter((_:any,idx:any) => idx !== i)})} 
+                  style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color:'#fff', border:'none', borderRadius:'50%', width:'20px', height:'20px', cursor:'pointer', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'}}
+                >X</button>
               </div>
             ))}
           </div>
@@ -448,7 +465,7 @@ export default function MabellenFinal() {
             {CATEGORIAS_MAP[productForm.genero].map(cat => <option key={cat} value={cat}>{cat.toUpperCase()}</option>)}
           </select>
 
-          <label>Estoque por Tamanho (Zere tudo para marcar como Esgotado)</label>
+          <label>Estoque por Tamanho</label>
           <div style={{background:'#f9f9f9', padding:'10px', borderRadius:'8px', border: '1px solid #eee'}}>
             {TAMANHOS_OPCOES.map(t => (
               <div key={t} className="stock-row">
