@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ClientInit from "./ClientInit"; // Importa o componente que você acabou de criar
 
-// O link da sua logo que pegamos no Supabase
 const LOGO_URL = "https://hhzqgrnuedzabacarjoi.supabase.co/storage/v1/object/public/logo%20mabellen.jpeg/mabellen-logo.jpeg.jpeg";
 
 export const metadata: Metadata = {
@@ -9,12 +9,10 @@ export const metadata: Metadata = {
   description: "Sua moda íntima com elegância e conforto.",
   manifest: "/manifest.json",
   themeColor: "#c9a96e",
-  // Define o ícone da aba (Favicon) e do iPhone
   icons: {
     icon: LOGO_URL,
     apple: LOGO_URL,
   },
-  // Configuração para WhatsApp, Facebook e Instagram
   openGraph: {
     title: "Mabellen - Loja Virtual",
     description: "Sua moda íntima com elegância e conforto.",
@@ -40,7 +38,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body>{children}</body>
+      <body>
+        <ClientInit /> {/* Isso ativa o OneSignal no celular do cliente */}
+        {children}
+      </body>
     </html>
   );
 }
