@@ -35,7 +35,7 @@ export default function RootLayout({
       <head>
         {/* O Next.js gerencia o Head automaticamente via metadata, 
             mas mantemos o suporte para ícones de dispositivo se necessário */}
-        <link rel="apple-touch-icon" href="COLE_AQUI_O_LINK_DA_SUA_LOGO" />
+        <link rel="apple-touch-icon" href="https://hhzqgrnuedzabacarjoi.supabase.co/storage/v1/object/public/logo%20mabellen.jpeg/mabellen-logo.jpeg.jpeg" />
       </head>
       <body>{children}</body>
     </html>
