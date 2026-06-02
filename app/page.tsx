@@ -13,7 +13,7 @@ const TAMANHOS_OPCOES = ['P', 'M', 'G', 'GG', ];
 const WHATSAPP_NUM = '5544998550741'; 
 
 const CATEGORIAS_MAP: Record<string, string[]> = {
-  FEMININO: ['calcinha', 'conjunto fitness', 'conjunto lingerie', 'legs calça', 'lingerie', 'pijama', 'sutiã'].sort(),
+  FEMININO: ['Blusinhas', 'calcinha', 'conjunto fitness', 'conjunto lingerie', 'legs calça', 'lingerie', 'pijama', 'sutiã'].sort(),
   MASCULINO: ['camiseta', 'conjuntos', 'cueca', 'pijama', 'shorts'].sort(), 
   INFANTIL_MENINAS: ['calcinha', 'conjuntos', 'pijama'].sort(),
   INFANTIL_MENINOS: ['conjuntos', 'cueca', 'pijama'].sort() 
@@ -531,9 +531,30 @@ export default function MabellenFinal() {
         </div>
       </div>
 
-      <a href={`https://wa.me/${WHATSAPP_NUM}`} target="_blank" rel="noopener noreferrer" style={{position:'fixed', bottom:'30px', left:'30px', background:'#25D366', color:'#fff', width:'50px', height:'50px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', textDecoration:'none', boxShadow:'0 4px 10px rgba(0,0,0,0.2)', zIndex:1000}}>
-        💬
-      </a>
+      <a
+  href={`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent("Olá! Não encontrei a informação no site e gostaria de tirar uma dúvida sobre um produto.")}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{
+    position: 'fixed',
+    bottom: '30px',
+    left: '30px',
+    background: '#25D366',
+    color: '#fff',
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '24px',
+    textDecoration: 'none',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+    zIndex: 1000
+  }}
+>
+  💬
+</a>
     </>
   );
 }
