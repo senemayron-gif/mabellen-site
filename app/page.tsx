@@ -14,6 +14,12 @@ export default function DocesDaRosaSite() {
   const [subFilter, setSubFilter] = useState('TODOS');
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Estado para controle do índice da foto atual em cada card
+  const [currentImageIndex, setCurrentImageIndex] = useState<Record<string, number>>({});
+  
+  // Estado para modal de zoom da imagem
+  const [modalImage, setModalImage] = useState<string | null>(null);
+
   // ESTADO DE CATEGORIAS DINÂMICAS
   const [categoriasMap, setCategoriasMap] = useState<Record<string, string[]>>({
     DIARIO: ['bolo no pote', 'copo da felicidade', 'docinhos individuais'],
@@ -24,7 +30,6 @@ export default function DocesDaRosaSite() {
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   const [backgroundImage, setBackgroundImage] = useState<string>('https://images.unsplash.com/photo-1511018556340-d16986a1c194?q=80&w=1200');
 
-  // Quantidade selecionada por produto no card
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
   const [productForm, setProductForm] = useState<any>({
@@ -53,7 +58,7 @@ export default function DocesDaRosaSite() {
           preco: 13.50,
           genero: 'DIARIO',
           categoria: 'bolo no pote',
-          fotos: ['https://i.postimg.cc/q79R42Vq/image-329e21.png'],
+          fotos: ['https://images.unsplash.com/photo-1587314168485-3236d6710814?q=80&w=600'],
           descricao: 'Brigadeiro de maracujá + brigadeiro tradicional + creme de Ninho + ganache de chocolate para finalizar.',
           ativo: true
         }
@@ -110,15 +115,30 @@ export default function DocesDaRosaSite() {
     setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], descricao: '', ativo: true });
   };
 
-  const changeQty = (prodId: string, delta: number, currentStockQty?: number) => {
+  const changeQty = (prodId: string, delta: number) => {
     const current = selectedQty[prodId] || 1;
     const next = current + delta;
     if (next < 1) return;
     setSelectedQty({ ...selectedQty, [prodId]: next });
   };
 
+  const nextImage = (prodId: string, totalFotos: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const current = currentImageIndex[prodId] || 0;
+    const next = (current + 1) % totalFotos;
+    setCurrentImageIndex({ ...currentImageIndex, [prodId]: next });
+  };
+
+  const prevImage = (prodId: string, totalFotos: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const current = currentImageIndex[prodId] || 0;
+    const prev = (current - 1 + totalFotos) % totalFotos;
+    setCurrentImageIndex({ ...currentImageIndex, [prodId]: prev });
+  };
+
   const addToCart = (prod: any) => {
     const qty = selectedQty[prod.id] || 1;
+    const fotoPrincipal = prod.fotos?.[currentImageIndex[prod.id] || 0] || prod.fotos?.[0] || '';
 
     const itemExistenteIndex = cart.findIndex(item => item.id === prod.id);
 
@@ -130,6 +150,7 @@ export default function DocesDaRosaSite() {
       const itemCarrinho = { 
         idCarrinho: Date.now(), 
         ...prod, 
+        fotoEscolhida: fotoPrincipal,
         quantidadeEscolhida: qty,
         selecionado: true
       };
@@ -176,6 +197,13 @@ export default function DocesDaRosaSite() {
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleRemoveSinglePhoto = (indexToRemove: number) => {
+    setProductForm((prev: any) => ({
+      ...prev,
+      fotos: prev.fotos.filter((_: any, index: number) => index !== indexToRemove)
+    }));
   };
 
   const handleBannerBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -515,16 +543,67 @@ export default function DocesDaRosaSite() {
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: zoom-in;
     }
     
     .img-container img {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* Ajusta a imagem perfeitamente dentro do quadrado */
+      object-fit: cover;
       transition: transform 0.5s ease;
     }
     .card:hover .img-container img {
       transform: scale(1.05);
+    }
+
+    /* Setas para passar as fotos */
+    .slider-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--text-brown);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: 0.2s;
+    }
+    .slider-btn:hover {
+      background: #fff;
+      color: var(--pink-glow);
+    }
+    .slider-btn.prev { left: 10px; }
+    .slider-btn.next { right: 10px; }
+
+    /* Indicador de bolinhas da foto */
+    .slider-dots {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+      z-index: 5;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+    .dot.active-dot {
+      background: var(--pink-glow);
+      width: 16px;
+      border-radius: 3px;
     }
     
     .product-info { 
@@ -550,7 +629,6 @@ export default function DocesDaRosaSite() {
       margin-bottom: 12px; 
     }
 
-    /* Caixa da descrição parecida com o modelo enviado */
     .desc-box {
       border: 1.5px solid #ffd1dc;
       background: #fff;
@@ -564,7 +642,6 @@ export default function DocesDaRosaSite() {
       font-weight: 500;
     }
 
-    /* Seletor de quantidade direto no card */
     .qty-selector-container {
       display: flex;
       align-items: center;
@@ -747,7 +824,14 @@ export default function DocesDaRosaSite() {
       <header>
         <div 
           className="painel-btn"
-          onClick={() => prompt('Senha administrativa (Apenas digite 2004 para testar):') === '2004' ? setAdminOpen(!adminOpen) : null}
+          onClick={() => {
+            const senha = prompt('Senha de acesso:');
+            if (senha === '2004') {
+              setAdminOpen(!adminOpen);
+            } else if (senha !== null) {
+              alert('Senha incorreta!');
+            }
+          }}
           title="Acessar Painel"
         >
           🧁
@@ -797,7 +881,10 @@ export default function DocesDaRosaSite() {
 
       <main className="grid">
         {filtered.map(prod => {
+          const fotos = prod.fotos?.length > 0 ? prod.fotos : ['https://via.placeholder.com/300'];
+          const currentIndex = currentImageIndex[prod.id] || 0;
           const currentQty = selectedQty[prod.id] || 1;
+
           return (
             <div key={prod.id} className="card">
               {adminOpen && (
@@ -806,9 +893,24 @@ export default function DocesDaRosaSite() {
                   <button onClick={() => handleDelete(prod.id)} style={{background:'red', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EXCLUIR</button>
                 </div>
               )}
-              <div className="img-container">
-                <img src={prod.fotos?.[0] || 'https://via.placeholder.com/300'} alt={prod.nome} />
+
+              <div className="img-container" onClick={() => setModalImage(fotos[currentIndex])}>
+                <img src={fotos[currentIndex]} alt={prod.nome} />
+
+                {fotos.length > 1 && (
+                  <>
+                    <button className="slider-btn prev" onClick={(e) => prevImage(prod.id, fotos.length, e)}>‹</button>
+                    <button className="slider-btn next" onClick={(e) => nextImage(prod.id, fotos.length, e)}>›</button>
+
+                    <div className="slider-dots">
+                      {fotos.map((_: any, idx: number) => (
+                        <span key={idx} className={`dot ${currentIndex === idx ? 'active-dot' : ''}`} />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
+
               <div className="product-info">
                 <div>
                   <p className="product-name">{prod.nome}</p>
@@ -822,7 +924,6 @@ export default function DocesDaRosaSite() {
                 </div>
 
                 <div>
-                  {/* Seletor de Quantidade (+ e -) */}
                   <div className="qty-selector-container">
                     <button className="qty-btn" onClick={() => changeQty(prod.id, -1)}>-</button>
                     <span className="qty-value">{currentQty}</span>
@@ -837,6 +938,27 @@ export default function DocesDaRosaSite() {
         })}
       </main>
 
+      {/* Modal para ampliar imagem em tela cheia */}
+      {modalImage && (
+        <div 
+          onClick={() => setModalImage(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', cursor: 'zoom-out'
+          }}
+        >
+          <div style={{position: 'relative', maxWidth: '90%', maxHeight: '90%'}}>
+            <img src={modalImage} alt="Zoom" style={{maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain', borderRadius: '10px'}} />
+            <button 
+              onClick={() => setModalImage(null)}
+              style={{position: 'absolute', top: '-15px', right: '-15px', background: '#fff', color: '#000', border: 'none', width: '35px', height: '35px', borderRadius: '50%', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer'}}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={`drawer ${cartOpen ? 'open' : ''}`}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'2px solid var(--pink-sweet)', paddingBottom:'12px'}}>
           <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.2rem', margin:0, color: 'var(--pink-glow)'}}>SUA SACOLA 👜</h2>
@@ -850,7 +972,7 @@ export default function DocesDaRosaSite() {
             <div style={{marginTop:'12px'}}>
               {cart.map((item) => (
                 <div key={item.idCarrinho} className="cart-item">
-                  <img src={item.fotos?.[0] || ''} alt="" />
+                  <img src={item.fotoEscolhida || item.fotos?.[0] || ''} alt="" />
                   <div style={{flex:1}}>
                     <p style={{fontSize:'0.75rem', fontWeight:'700', margin:0, color: 'var(--text-brown)'}}>{item.nome}</p>
                     <p style={{fontSize:'0.65rem', color:'#888', margin:'3px 0'}}>
@@ -971,18 +1093,32 @@ export default function DocesDaRosaSite() {
             onChange={e => setProductForm({...productForm, descricao: e.target.value})} 
           />
 
-          <label>Foto do Doce (Upload Local)</label>
+          <label>Fotos do Doce (Adicione quantas quiser)</label>
           <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
 
           {productForm.fotos?.length > 0 && (
-            <div style={{display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'8px'}}>
+            <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginTop:'10px'}}>
               {productForm.fotos.map((f: string, i: number) => (
-                <img key={i} src={f} alt="" style={{width:'45px', height:'45px', objectFit:'cover', borderRadius:'5px'}} />
+                <div key={i} style={{position: 'relative', display: 'inline-block'}}>
+                  <img src={f} alt="" style={{width:'55px', height:'55px', objectFit:'cover', borderRadius:'6px', border: '1px solid #ffd1dc'}} />
+                  <button 
+                    type="button"
+                    onClick={() => handleRemoveSinglePhoto(i)}
+                    style={{
+                      position: 'absolute', top: '-6px', right: '-6px', background: 'red', color: '#fff',
+                      border: 'none', width: '20px', height: '20px', borderRadius: '50%', fontSize: '10px',
+                      fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                    title="Excluir apenas esta foto"
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
             </div>
           )}
 
-          <label>Alterar Fundo do Banner</label>
+          <label style={{marginTop: '20px'}}>Alterar Fundo do Banner</label>
           <input type="file" accept="image/*" onChange={handleBannerBackgroundUpload} />
 
           <div style={{display:'flex', gap:'8px', marginTop:'18px'}}>
