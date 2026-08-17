@@ -24,15 +24,15 @@ export default function DocesDaRosaSite() {
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   const [backgroundImage, setBackgroundImage] = useState<string>('https://images.unsplash.com/photo-1511018556340-d16986a1c194?q=80&w=1200');
 
-  const [selectedColor, setSelectedColor] = useState<Record<string, string>>({}); 
+  // Quantidade selecionada por produto no card
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
   const [productForm, setProductForm] = useState<any>({
-    nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], cores: '', ativo: true
+    nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], descricao: '', ativo: true
   });
 
   useEffect(() => {
-    const savedCats = localStorage.getItem('doces_categorias_v3');
+    const savedCats = localStorage.getItem('doces_categorias_v4');
     if (savedCats) {
       setCategoriasMap(JSON.parse(savedCats));
     }
@@ -42,24 +42,24 @@ export default function DocesDaRosaSite() {
       setBackgroundImage(savedBg);
     }
 
-    const savedProducts = localStorage.getItem('doces_produtos_teste_v2');
+    const savedProducts = localStorage.getItem('doces_produtos_teste_v3');
     if (savedProducts) {
       setProducts(JSON.parse(savedProducts));
     } else {
       const padrao = [
         {
           id: '1',
-          nome: 'Copo da Felicidade - Ninho com Nutella e Morangos',
-          preco: 18.00,
+          nome: 'Bolo pote',
+          preco: 13.50,
           genero: 'DIARIO',
-          categoria: 'copo da felicidade',
+          categoria: 'bolo no pote',
           fotos: ['https://i.postimg.cc/q79R42Vq/image-329e21.png'],
-          cores: 'Tradicional, Chocolate Belga',
+          descricao: 'Brigadeiro de maracujá + brigadeiro tradicional + creme de Ninho + ganache de chocolate para finalizar.',
           ativo: true
         }
       ];
       setProducts(padrao);
-      localStorage.setItem('doces_produtos_teste_v2', JSON.stringify(padrao));
+      localStorage.setItem('doces_produtos_teste_v3', JSON.stringify(padrao));
     }
 
     const savedCart = localStorage.getItem('docesdarosa_cart');
@@ -87,7 +87,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v3', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v4', JSON.stringify(novasCategorias));
     setNovaCatNome('');
     alert(`Categoria "${nomeLimpo.toUpperCase()}" criada com sucesso!`);
   };
@@ -101,23 +101,26 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v3', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v4', JSON.stringify(novasCategorias));
   };
 
   const resetForm = () => {
     setEditingId(null);
     const primeiraCatDoGrupo = categoriasMap[productForm.genero]?.[0] || '';
-    setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], cores: '', ativo: true });
+    setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], descricao: '', ativo: true });
+  };
+
+  const changeQty = (prodId: string, delta: number, currentStockQty?: number) => {
+    const current = selectedQty[prodId] || 1;
+    const next = current + delta;
+    if (next < 1) return;
+    setSelectedQty({ ...selectedQty, [prodId]: next });
   };
 
   const addToCart = (prod: any) => {
-    const sabor = selectedColor[prod.id] || 'N/A';
     const qty = selectedQty[prod.id] || 1;
 
-    const itemExistenteIndex = cart.findIndex(item => 
-      item.id === prod.id && 
-      item.corEscolhida === sabor
-    );
+    const itemExistenteIndex = cart.findIndex(item => item.id === prod.id);
 
     if (itemExistenteIndex !== -1) {
       const novoCarrinho = [...cart];
@@ -127,14 +130,12 @@ export default function DocesDaRosaSite() {
       const itemCarrinho = { 
         idCarrinho: Date.now(), 
         ...prod, 
-        corEscolhida: sabor, 
         quantidadeEscolhida: qty,
         selecionado: true
       };
       setCart([...cart, itemCarrinho]);
     }
 
-    setSelectedColor({ ...selectedColor, [prod.id]: '' });
     setSelectedQty({ ...selectedQty, [prod.id]: 1 });
     setCartOpen(true);
   };
@@ -153,7 +154,7 @@ export default function DocesDaRosaSite() {
 
     let msg = `*NOVO PEDIDO - DOCES DA ROSA* 🌸\n\n`;
     itensSelecionados.forEach(item => {
-      msg += `• ${item.quantidadeEscolhida}x ${item.nome} (Sabor: ${item.corEscolhida}) - R$ ${(item.preco * item.quantidadeEscolhida).toFixed(2)}\n`;
+      msg += `• ${item.quantidadeEscolhida}x ${item.nome} - R$ ${(item.preco * item.quantidadeEscolhida).toFixed(2)}\n`;
     });
     msg += `\n*TOTAL DO PEDIDO: R$ ${totalCart.toFixed(2)}*\n\n_Gostaria de combinar a entrega/retirada em Maringá!_`;
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
@@ -211,7 +212,7 @@ export default function DocesDaRosaSite() {
     }
 
     setProducts(novosProdutos);
-    localStorage.setItem('doces_produtos_teste_v2', JSON.stringify(novosProdutos));
+    localStorage.setItem('doces_produtos_teste_v3', JSON.stringify(novosProdutos));
     alert("Doce salvo com sucesso!");
     setFormOpen(false);
     resetForm();
@@ -224,7 +225,7 @@ export default function DocesDaRosaSite() {
 
     const novos = products.filter(p => p.id !== targetId);
     setProducts(novos);
-    localStorage.setItem('doces_produtos_teste_v2', JSON.stringify(novos));
+    localStorage.setItem('doces_produtos_teste_v3', JSON.stringify(novos));
     setFormOpen(false);
     resetForm();
   }
@@ -240,7 +241,6 @@ export default function DocesDaRosaSite() {
       --pink-glow: #ff1493;
       --pink-sweet: #ff4da6;
       --pink-light: #fff0f5;
-      --gold-dark: #b8860b; 
       --gold-shiny: #ffd700;
       --bg-gradient: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 50%, #ffd1dc 100%);
       --text-brown: #5c2c3b;
@@ -296,7 +296,7 @@ export default function DocesDaRosaSite() {
       background: var(--text-brown);
       border: 2px solid var(--gold-shiny);
       border-radius: 50%;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.3s ease;
       box-shadow: 0 4px 10px rgba(92, 44, 59, 0.2);
     }
     .painel-btn:hover {
@@ -495,7 +495,7 @@ export default function DocesDaRosaSite() {
       overflow: hidden; 
       display: flex; 
       flex-direction: column; 
-      border-radius: 16px; 
+      border-radius: 20px; 
       box-shadow: 0 8px 20px rgba(255, 77, 166, 0.08);
       transition: all 0.3s ease;
     }
@@ -507,18 +507,24 @@ export default function DocesDaRosaSite() {
     
     .img-container { 
       width: 100%; 
-      height: 280px; 
-      background: #fffefb; 
+      height: 300px; 
+      background: #fff9fa; 
       position: relative; 
       overflow: hidden;
       border-bottom: 1.5px solid var(--pink-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .img-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Ajusta a imagem perfeitamente dentro do quadrado */
       transition: transform 0.5s ease;
     }
     .card:hover .img-container img {
-      transform: scale(1.06);
+      transform: scale(1.05);
     }
     
     .product-info { 
@@ -532,51 +538,64 @@ export default function DocesDaRosaSite() {
     }
     .product-name { 
       font-family: 'Playfair Display', serif; 
-      font-size: 1.2rem; 
+      font-size: 1.3rem; 
       font-weight: 700; 
       color: var(--text-brown); 
-      margin: 0 0 6px 0;
+      margin: 0 0 4px 0;
     }
     .product-price { 
-      font-size: 1.3rem; 
+      font-size: 1.35rem; 
       font-weight: 800; 
       color: var(--pink-glow); 
-      margin-bottom: 14px; 
+      margin-bottom: 12px; 
     }
 
-    .selector-label { 
-      font-size: 0.65rem; 
-      color: #b08d98; 
-      text-transform: uppercase; 
-      font-weight: 700; 
-      margin-top: 10px; 
-      display: block; 
+    /* Caixa da descrição parecida com o modelo enviado */
+    .desc-box {
+      border: 1.5px solid #ffd1dc;
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      color: var(--text-brown);
+      line-height: 1.4;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: 500;
     }
-    .options-container { 
-      display: flex; 
-      justify-content: center; 
-      gap: 6px; 
-      margin-bottom: 12px; 
-      flex-wrap: wrap; 
+
+    /* Seletor de quantidade direto no card */
+    .qty-selector-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 12px;
     }
-    .opt-btn { 
-      border: 1.5px solid #ffd1dc; 
-      background: #fff; 
-      padding: 5px 12px; 
-      font-size: 0.7rem; 
+    .qty-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--pink-sweet);
+      background: #fff;
+      color: var(--pink-glow);
+      font-weight: 800;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+    }
+    .qty-btn:hover {
+      background: var(--pink-light);
+    }
+    .qty-value {
+      font-size: 0.85rem;
       font-weight: 700;
       color: var(--text-brown);
-      cursor: pointer; 
-      border-radius: 6px; 
-      transition: all 0.2s ease;
-    }
-    .opt-btn:hover {
-      border-color: var(--pink-sweet);
-    }
-    .opt-btn.active { 
-      background: var(--pink-sweet); 
-      color: #fff; 
-      border-color: var(--pink-sweet); 
+      min-width: 20px;
+      text-align: center;
     }
     
     .btn-buy { 
@@ -589,7 +608,7 @@ export default function DocesDaRosaSite() {
       font-weight: 800; 
       cursor: pointer; 
       text-transform: uppercase; 
-      border-radius: 10px; 
+      border-radius: 12px; 
       letter-spacing: 0.5px;
       transition: all 0.2s ease;
       box-shadow: 0 4px 12px rgba(255, 20, 147, 0.25);
@@ -658,7 +677,7 @@ export default function DocesDaRosaSite() {
       color: var(--pink-sweet); 
       text-transform: uppercase;
     }
-    .admin-form input, .admin-form select { 
+    .admin-form input, .admin-form select, .admin-form textarea { 
       width: 100%; 
       padding: 10px; 
       background: #fff;
@@ -777,44 +796,45 @@ export default function DocesDaRosaSite() {
       </div>
 
       <main className="grid">
-        {filtered.map(prod => (
-          <div key={prod.id} className="card">
-            {adminOpen && (
-              <div style={{position:'absolute', zIndex:10, top:'10px', left:'10px', display:'flex', gap:'5px'}}>
-                <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setFormOpen(true); }} style={{background:'#000', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EDITAR</button>
-                <button onClick={() => handleDelete(prod.id)} style={{background:'red', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EXCLUIR</button>
+        {filtered.map(prod => {
+          const currentQty = selectedQty[prod.id] || 1;
+          return (
+            <div key={prod.id} className="card">
+              {adminOpen && (
+                <div style={{position:'absolute', zIndex:10, top:'10px', left:'10px', display:'flex', gap:'5px'}}>
+                  <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setFormOpen(true); }} style={{background:'#000', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EDITAR</button>
+                  <button onClick={() => handleDelete(prod.id)} style={{background:'red', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EXCLUIR</button>
+                </div>
+              )}
+              <div className="img-container">
+                <img src={prod.fotos?.[0] || 'https://via.placeholder.com/300'} alt={prod.nome} />
               </div>
-            )}
-            <div className="img-container">
-              <img src={prod.fotos?.[0] || 'https://via.placeholder.com/300'} alt={prod.nome} style={{width:'100%', height:'100%', objectFit:'cover'}} />
-            </div>
-            <div className="product-info">
-              <div>
-                <p className="product-name">{prod.nome}</p>
-                <p className="product-price">R$ {Number(prod.preco).toFixed(2)}</p>
+              <div className="product-info">
+                <div>
+                  <p className="product-name">{prod.nome}</p>
+                  <p className="product-price">R$ {Number(prod.preco).toFixed(2)}</p>
 
-                {prod.cores && (
-                  <>
-                    <span className="selector-label">Escolha o Sabor</span>
-                    <div className="options-container">
-                      {prod.cores.split(',').map((c: string) => (
-                        <button 
-                          key={c}
-                          className={`opt-btn ${selectedColor[prod.id] === c.trim() ? 'active' : ''}`}
-                          onClick={() => setSelectedColor({...selectedColor, [prod.id]: c.trim()})}
-                        >
-                          {c.trim()}
-                        </button>
-                      ))}
+                  {prod.descricao && (
+                    <div className="desc-box">
+                      {prod.descricao}
                     </div>
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
 
-              <button className="btn-buy" onClick={() => addToCart(prod)}>ADICIONAR À SACOLA</button>
+                <div>
+                  {/* Seletor de Quantidade (+ e -) */}
+                  <div className="qty-selector-container">
+                    <button className="qty-btn" onClick={() => changeQty(prod.id, -1)}>-</button>
+                    <span className="qty-value">{currentQty}</span>
+                    <button className="qty-btn" onClick={() => changeQty(prod.id, 1)}>+</button>
+                  </div>
+
+                  <button className="btn-buy" onClick={() => addToCart(prod)}>ADICIONAR À SACOLA</button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </main>
 
       <div className={`drawer ${cartOpen ? 'open' : ''}`}>
@@ -834,9 +854,9 @@ export default function DocesDaRosaSite() {
                   <div style={{flex:1}}>
                     <p style={{fontSize:'0.75rem', fontWeight:'700', margin:0, color: 'var(--text-brown)'}}>{item.nome}</p>
                     <p style={{fontSize:'0.65rem', color:'#888', margin:'3px 0'}}>
-                      Sabor: {item.corEscolhida}
+                      Qtd: {item.quantidadeEscolhida}x
                     </p>
-                    <p style={{fontSize:'0.8rem', fontWeight:'700', color:'var(--pink-glow)', margin:0}}>R$ {Number(item.preco).toFixed(2)}</p>
+                    <p style={{fontSize:'0.8rem', fontWeight:'700', color:'var(--pink-glow)', margin:0}}>R$ {(item.preco * item.quantidadeEscolhida).toFixed(2)}</p>
                   </div>
                   <button onClick={() => removeFromCart(item.idCarrinho)} style={{background:'none', border:'none', color:'red', cursor:'pointer', fontSize:'0.65rem', fontWeight: 600}}>Excluir</button>
                 </div>
@@ -943,12 +963,12 @@ export default function DocesDaRosaSite() {
             ))}
           </select>
 
-          <label>Sabores (separados por vírgula)</label>
-          <input 
-            type="text" 
-            placeholder="Ex: Ninho, Brigadeiro, Nutella" 
-            value={productForm.cores} 
-            onChange={e => setProductForm({...productForm, cores: e.target.value})} 
+          <label>Descrição / Ingredientes do Doce</label>
+          <textarea 
+            rows={3}
+            placeholder="Ex: Brigadeiro de maracujá + brigadeiro tradicional + creme de Ninho..." 
+            value={productForm.descricao} 
+            onChange={e => setProductForm({...productForm, descricao: e.target.value})} 
           />
 
           <label>Foto do Doce (Upload Local)</label>
