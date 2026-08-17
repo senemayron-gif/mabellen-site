@@ -272,17 +272,17 @@ export default function DocesDaRosaSite() {
     }
 
     header { 
-      background: rgba(255, 255, 255, 0.9); 
+      background: rgba(255, 255, 255, 0.95); 
       backdrop-filter: blur(10px);
       padding: 15px 5%; 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      border-bottom: 3px solid var(--pink-sweet); 
+      border-bottom: 2px solid var(--pink-sweet); 
       position: sticky; 
       top: 0; 
       z-index: 500; 
-      box-shadow: 0 4px 20px rgba(255, 20, 147, 0.15);
+      box-shadow: 0 4px 20px rgba(255, 20, 147, 0.1);
     }
 
     .painel-btn {
@@ -297,12 +297,11 @@ export default function DocesDaRosaSite() {
       border: 2px solid var(--gold-shiny);
       border-radius: 50%;
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 4px 10px rgba(92, 44, 59, 0.3);
+      box-shadow: 0 4px 10px rgba(92, 44, 59, 0.2);
     }
     .painel-btn:hover {
       background: var(--pink-glow);
-      transform: scale(1.15) rotate(15deg);
-      box-shadow: 0 0 15px var(--pink-glow);
+      transform: scale(1.1) rotate(10deg);
     }
     
     .bag-wrapper {
@@ -318,19 +317,18 @@ export default function DocesDaRosaSite() {
       display: flex; 
       align-items: center; 
       justify-content: center; 
-      width: 48px; 
-      height: 48px; 
+      width: 45px; 
+      height: 45px; 
       background: var(--pink-sweet);
       border-radius: 50%;
-      font-size: 1.3rem;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
       border: 2px solid #fff;
-      box-shadow: 0 4px 10px rgba(255, 20, 147, 0.3);
+      box-shadow: 0 4px 10px rgba(255, 20, 147, 0.2);
     }
     .bag-wrapper:hover .bag-container {
-      transform: scale(1.15) rotate(-10deg);
+      transform: scale(1.1);
       background: var(--pink-glow);
-      box-shadow: 0 0 20px var(--pink-glow);
     }
 
     .bag-text {
@@ -343,27 +341,26 @@ export default function DocesDaRosaSite() {
     
     .bag-badge { 
       position: absolute; 
-      top: -5px; 
-      right: -5px; 
+      top: -4px; 
+      right: -4px; 
       background: var(--gold-shiny); 
       color: var(--text-brown); 
       font-size: 10px; 
       font-weight: 900; 
-      width: 22px; 
-      height: 22px; 
+      width: 20px; 
+      height: 20px; 
       border-radius: 50%; 
       display: flex; 
       align-items: center; 
       justify-content: center; 
-      box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
       border: 1.5px solid #fff;
     }
 
     .hero-section { 
       position: relative; 
       width: 100%; 
-      height: 50vh; 
-      min-height: 350px; 
+      height: 45vh; 
+      min-height: 320px; 
       background-size: cover; 
       background-position: center; 
       display: flex; 
@@ -373,66 +370,63 @@ export default function DocesDaRosaSite() {
     .hero-overlay { 
       position: absolute; 
       inset: 0; 
-      background: linear-gradient(135deg, rgba(255, 240, 245, 0.8) 0%, rgba(255, 77, 166, 0.6) 100%); 
+      background: linear-gradient(135deg, rgba(255, 240, 245, 0.85) 0%, rgba(255, 77, 166, 0.5) 100%); 
     }
     .hero-content { 
       position: relative; 
       z-index: 10; 
       max-width: 700px; 
-      padding: 25px; 
+      padding: 20px; 
       text-align: center; 
     }
     
     .hero-title-main { 
       font-family: 'Great Vibes', cursive; 
-      font-size: 6rem; 
+      font-size: 5.5rem; 
       color: var(--pink-glow); 
       margin: 0;
       line-height: 1;
-      text-shadow: 3px 3px 6px rgba(255, 255, 255, 0.9);
+      text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
     }
     .hero-title-sub { 
       font-family: 'Playfair Display', serif; 
-      font-size: 2.5rem; 
+      font-size: 2.2rem; 
       font-weight: 700; 
-      letter-spacing: 3px;
+      letter-spacing: 2px;
       color: var(--text-brown); 
       text-transform: uppercase;
-      margin-top: -10px;
-      margin-bottom: 15px;
+      margin-top: -5px;
+      margin-bottom: 12px;
     }
     .hero-subtitle { 
-      font-size: 1.1rem; 
-      font-weight: 600;
+      font-size: 1rem; 
+      font-weight: 500;
       color: var(--text-brown);
-      margin-bottom: 20px; 
-      letter-spacing: 0.5px;
-      line-height: 1.5;
-      background: rgba(255, 255, 255, 0.85);
-      padding: 10px 20px;
-      border-radius: 30px;
+      margin-bottom: 0; 
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 18px;
+      border-radius: 20px;
       display: inline-block;
-      box-shadow: 0 4px 15px rgba(255, 20, 147, 0.1);
+      box-shadow: 0 4px 12px rgba(255, 20, 147, 0.08);
     }
     .hero-badge {
       display: inline-block;
       background: var(--pink-glow);
       color: #fff;
-      padding: 6px 20px;
-      font-size: 0.75rem;
-      border-radius: 20px;
-      margin-bottom: 12px;
-      font-weight: 800;
-      letter-spacing: 2px;
+      padding: 5px 16px;
+      font-size: 0.7rem;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
     }
 
     .nav-main { 
       display: flex; 
       justify-content: center; 
-      gap: 30px; 
-      padding: 22px 15px; 
+      gap: 25px; 
+      padding: 18px 15px; 
       background: rgba(255, 255, 255, 0.9); 
       backdrop-filter: blur(5px);
       border-bottom: 2px solid var(--pink-light); 
@@ -441,98 +435,94 @@ export default function DocesDaRosaSite() {
       background: none; 
       border: none; 
       cursor: pointer; 
-      letter-spacing: 1.5px; 
-      font-weight: 800; 
+      letter-spacing: 1px; 
+      font-weight: 700; 
       font-family: 'Montserrat', sans-serif; 
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: #a37c88;
       text-transform: uppercase;
       transition: 0.3s;
-      padding-bottom: 6px;
+      padding-bottom: 4px;
     }
     .nav-main button.active-gender { 
       color: var(--pink-glow) !important; 
-      border-bottom: 4px solid var(--pink-glow); 
-      text-shadow: 0 0 10px rgba(255, 20, 147, 0.2);
+      border-bottom: 3px solid var(--pink-glow); 
     }
 
     .sub-nav { 
       display: flex; 
       justify-content: center; 
-      gap: 10px; 
-      padding: 18px; 
+      gap: 8px; 
+      padding: 15px; 
       flex-wrap: wrap; 
-      background: rgba(255, 240, 245, 0.7); 
-      border-bottom: 1px solid rgba(255, 20, 147, 0.1); 
+      background: rgba(255, 240, 245, 0.6); 
     }
     .sub-btn { 
       background: #fff; 
-      border: 2px solid #ffd1dc; 
-      padding: 8px 20px; 
-      font-size: 0.75rem; 
+      border: 1.5px solid #ffd1dc; 
+      padding: 6px 16px; 
+      font-size: 0.7rem; 
       font-weight: 700;
       cursor: pointer; 
       color: var(--text-brown); 
-      border-radius: 25px; 
+      border-radius: 20px; 
       text-transform: uppercase;
-      transition: all 0.3s ease;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
     }
     .sub-btn:hover {
       border-color: var(--pink-sweet);
-      transform: translateY(-2px);
     }
     .sub-btn.active { 
       background: var(--pink-sweet); 
       color: #fff; 
       border-color: var(--pink-sweet); 
-      box-shadow: 0 4px 12px rgba(255, 77, 166, 0.4);
+      box-shadow: 0 3px 10px rgba(255, 77, 166, 0.3);
     }
 
     .grid { 
       display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); 
-      gap: 35px; 
-      padding: 40px 5%; 
-      position: relative;
-      z-index: 5;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+      gap: 30px; 
+      padding: 35px 5%; 
+      max-width: 1200px;
+      margin: 0 auto;
     }
     
     .card { 
       background: #fff; 
-      border: 2px solid #ffe4e1; 
+      border: 1.5px solid #ffe4e1; 
       position: relative; 
       overflow: hidden; 
       display: flex; 
       flex-direction: column; 
-      border-radius: 20px; 
-      box-shadow: 0 10px 25px rgba(255, 77, 166, 0.1);
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-radius: 16px; 
+      box-shadow: 0 8px 20px rgba(255, 77, 166, 0.08);
+      transition: all 0.3s ease;
     }
     .card:hover {
-      transform: translateY(-10px) scale(1.02);
+      transform: translateY(-6px);
       border-color: var(--pink-sweet);
-      box-shadow: 0 15px 35px rgba(255, 20, 147, 0.25);
+      box-shadow: 0 12px 30px rgba(255, 20, 147, 0.18);
     }
     
     .img-container { 
       width: 100%; 
-      height: 310px; 
+      height: 280px; 
       background: #fffefb; 
       position: relative; 
       overflow: hidden;
-      border-bottom: 2px solid var(--pink-light);
+      border-bottom: 1.5px solid var(--pink-light);
     }
     
     .img-container img {
-      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 0.5s ease;
     }
     .card:hover .img-container img {
-      transform: scale(1.08) rotate(1.5deg);
+      transform: scale(1.06);
     }
     
     .product-info { 
-      padding: 24px; 
+      padding: 20px; 
       text-align: center; 
       flex-grow: 1; 
       display: flex; 
@@ -542,43 +532,42 @@ export default function DocesDaRosaSite() {
     }
     .product-name { 
       font-family: 'Playfair Display', serif; 
-      font-size: 1.3rem; 
+      font-size: 1.2rem; 
       font-weight: 700; 
       color: var(--text-brown); 
-      margin: 0 0 8px 0;
+      margin: 0 0 6px 0;
     }
     .product-price { 
-      font-size: 1.4rem; 
+      font-size: 1.3rem; 
       font-weight: 800; 
       color: var(--pink-glow); 
-      text-shadow: 0 0 5px rgba(255, 20, 147, 0.1);
-      margin-bottom: 18px; 
+      margin-bottom: 14px; 
     }
 
     .selector-label { 
       font-size: 0.65rem; 
       color: #b08d98; 
       text-transform: uppercase; 
-      font-weight: 800; 
-      margin-top: 12px; 
+      font-weight: 700; 
+      margin-top: 10px; 
       display: block; 
     }
     .options-container { 
       display: flex; 
       justify-content: center; 
-      gap: 8px; 
-      margin-bottom: 15px; 
+      gap: 6px; 
+      margin-bottom: 12px; 
       flex-wrap: wrap; 
     }
     .opt-btn { 
-      border: 2px solid #ffd1dc; 
+      border: 1.5px solid #ffd1dc; 
       background: #fff; 
-      padding: 6px 14px; 
-      font-size: 0.75rem; 
+      padding: 5px 12px; 
+      font-size: 0.7rem; 
       font-weight: 700;
       color: var(--text-brown);
       cursor: pointer; 
-      border-radius: 8px; 
+      border-radius: 6px; 
       transition: all 0.2s ease;
     }
     .opt-btn:hover {
@@ -588,7 +577,6 @@ export default function DocesDaRosaSite() {
       background: var(--pink-sweet); 
       color: #fff; 
       border-color: var(--pink-sweet); 
-      box-shadow: 0 4px 10px rgba(255, 77, 166, 0.3);
     }
     
     .btn-buy { 
@@ -596,19 +584,19 @@ export default function DocesDaRosaSite() {
       background: linear-gradient(135deg, var(--pink-glow) 0%, var(--pink-sweet) 100%);
       color: #fff; 
       border: none; 
-      padding: 16px; 
-      font-size: 0.8rem; 
+      padding: 14px; 
+      font-size: 0.75rem; 
       font-weight: 800; 
       cursor: pointer; 
       text-transform: uppercase; 
-      border-radius: 12px; 
-      letter-spacing: 1px;
-      transition: all 0.3s ease;
-      box-shadow: 0 6px 18px rgba(255, 20, 147, 0.3);
+      border-radius: 10px; 
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(255, 20, 147, 0.25);
     }
     .btn-buy:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(255, 20, 147, 0.5);
+      opacity: 0.95;
+      transform: translateY(-1px);
     }
 
     .drawer { 
@@ -616,16 +604,16 @@ export default function DocesDaRosaSite() {
       right: -100%; 
       top: 0; 
       width: 100%; 
-      max-width: 420px; 
+      max-width: 400px; 
       height: 100%; 
       background: #fff; 
       z-index: 9999; 
-      transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-      padding: 30px; 
+      transition: right 0.35s ease; 
+      padding: 25px; 
       box-sizing: border-box; 
       overflow-y: auto; 
-      border-left: 3px solid var(--pink-sweet);
-      box-shadow: -10px 0 40px rgba(255, 20, 147, 0.1); 
+      border-left: 2px solid var(--pink-sweet);
+      box-shadow: -8px 0 30px rgba(255, 20, 147, 0.1); 
     }
     .drawer.open { 
       right: 0; 
@@ -633,17 +621,17 @@ export default function DocesDaRosaSite() {
     
     .cart-item { 
       display: flex; 
-      gap: 15px; 
-      padding: 15px 0; 
+      gap: 12px; 
+      padding: 12px 0; 
       border-bottom: 1px solid var(--pink-light); 
       align-items: center; 
     }
     .cart-item img { 
-      width: 60px; 
-      height: 80px; 
+      width: 55px; 
+      height: 70px; 
       object-fit: cover; 
       background: #fff;
-      border-radius: 8px; 
+      border-radius: 6px; 
       border: 1px solid var(--pink-light);
     }
 
@@ -652,70 +640,67 @@ export default function DocesDaRosaSite() {
       background: var(--pink-glow); 
       color: #fff; 
       border: none; 
-      padding: 16px; 
-      font-size: 0.8rem; 
+      padding: 14px; 
+      font-size: 0.75rem; 
       font-weight: 800; 
       cursor: pointer; 
       text-transform: uppercase; 
-      border-radius: 12px; 
-      letter-spacing: 1px;
-      box-shadow: 0 6px 18px rgba(255, 20, 147, 0.3);
-    }
-    .primary-btn:hover {
-      box-shadow: 0 10px 25px rgba(255, 20, 147, 0.5);
+      border-radius: 10px; 
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(255, 20, 147, 0.25);
     }
     
     .admin-form label { 
       display: block; 
       font-size: 0.7rem; 
       font-weight: 700; 
-      margin-top: 14px; 
+      margin-top: 12px; 
       color: var(--pink-sweet); 
       text-transform: uppercase;
     }
     .admin-form input, .admin-form select { 
       width: 100%; 
-      padding: 12px; 
+      padding: 10px; 
       background: #fff;
       color: var(--text-brown);
       border: 1.5px solid #ffd1dc; 
       box-sizing: border-box; 
-      font-size: 0.8rem; 
-      border-radius: 8px; 
-      margin-top: 5px; 
+      font-size: 0.75rem; 
+      border-radius: 6px; 
+      margin-top: 4px; 
     }
 
     .btn-add-new { 
       position: fixed; 
-      bottom: 30px; 
-      left: 30px; 
+      bottom: 25px; 
+      left: 25px; 
       background: var(--pink-glow); 
       color: #fff; 
-      width: 56px; 
-      height: 56px; 
+      width: 50px; 
+      height: 50px; 
       border-radius: 50%; 
       border: none; 
-      font-size: 26px; 
+      font-size: 24px; 
       cursor: pointer; 
       display: flex; 
       align-items: center; 
       justify-content: center; 
       z-index: 1000; 
-      box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4); 
+      box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3); 
     }
 
     .whatsapp-float {
       position: fixed;
-      bottom: 30px;
-      right: 30px;
+      bottom: 25px;
+      right: 25px;
       background-color: #25d366;
       color: #fff;
-      width: 60px;
-      height: 60px;
+      width: 55px;
+      height: 55px;
       border-radius: 50%;
       text-align: center;
-      font-size: 30px;
-      box-shadow: 2px 4px 20px rgba(37, 211, 102, 0.4);
+      font-size: 26px;
+      box-shadow: 2px 4px 15px rgba(37, 211, 102, 0.35);
       z-index: 999;
       display: flex;
       align-items: center;
@@ -725,7 +710,7 @@ export default function DocesDaRosaSite() {
     }
     .whatsapp-float:hover {
       background-color: #128c7e;
-      transform: scale(1.15) rotate(10deg);
+      transform: scale(1.1);
     }
   `;
 
@@ -795,9 +780,9 @@ export default function DocesDaRosaSite() {
         {filtered.map(prod => (
           <div key={prod.id} className="card">
             {adminOpen && (
-              <div style={{position:'absolute', zIndex:10, top:'12px', left:'12px', display:'flex', gap:'5px'}}>
-                <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setFormOpen(true); }} style={{background:'#000', color:'#fff', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'4px'}}>EDITAR</button>
-                <button onClick={() => handleDelete(prod.id)} style={{background:'red', color:'#fff', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'4px'}}>EXCLUIR</button>
+              <div style={{position:'absolute', zIndex:10, top:'10px', left:'10px', display:'flex', gap:'5px'}}>
+                <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setFormOpen(true); }} style={{background:'#000', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EDITAR</button>
+                <button onClick={() => handleDelete(prod.id)} style={{background:'red', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EXCLUIR</button>
               </div>
             )}
             <div className="img-container">
@@ -833,35 +818,35 @@ export default function DocesDaRosaSite() {
       </main>
 
       <div className={`drawer ${cartOpen ? 'open' : ''}`}>
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'2px solid var(--pink-sweet)', paddingBottom:'15px'}}>
-          <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.3rem', margin:0, color: 'var(--pink-glow)'}}>SUA SACOLA 👜</h2>
-          <button onClick={() => setCartOpen(false)} style={{background:'none', border:'none', fontSize:'1.4rem', cursor:'pointer', color: 'var(--pink-sweet)'}}>✕</button>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'2px solid var(--pink-sweet)', paddingBottom:'12px'}}>
+          <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.2rem', margin:0, color: 'var(--pink-glow)'}}>SUA SACOLA 👜</h2>
+          <button onClick={() => setCartOpen(false)} style={{background:'none', border:'none', fontSize:'1.2rem', cursor:'pointer', color: 'var(--pink-sweet)'}}>✕</button>
         </div>
 
         {cart.length === 0 ? (
-          <p style={{textAlign:'center', marginTop:'30px', color:'#a37c88', fontSize:'0.8rem'}}>Sua sacola está vazia.</p>
+          <p style={{textAlign:'center', marginTop:'30px', color:'#a37c88', fontSize:'0.75rem'}}>Sua sacola está vazia.</p>
         ) : (
           <>
-            <div style={{marginTop:'15px'}}>
+            <div style={{marginTop:'12px'}}>
               {cart.map((item) => (
                 <div key={item.idCarrinho} className="cart-item">
                   <img src={item.fotos?.[0] || ''} alt="" />
                   <div style={{flex:1}}>
-                    <p style={{fontSize:'0.8rem', fontWeight:'700', margin:0, color: 'var(--text-brown)'}}>{item.nome}</p>
-                    <p style={{fontSize:'0.7rem', color:'#888', margin:'4px 0'}}>
+                    <p style={{fontSize:'0.75rem', fontWeight:'700', margin:0, color: 'var(--text-brown)'}}>{item.nome}</p>
+                    <p style={{fontSize:'0.65rem', color:'#888', margin:'3px 0'}}>
                       Sabor: {item.corEscolhida}
                     </p>
-                    <p style={{fontSize:'0.85rem', fontWeight:'700', color:'var(--pink-glow)', margin:0}}>R$ {Number(item.preco).toFixed(2)}</p>
+                    <p style={{fontSize:'0.8rem', fontWeight:'700', color:'var(--pink-glow)', margin:0}}>R$ {Number(item.preco).toFixed(2)}</p>
                   </div>
-                  <button onClick={() => removeFromCart(item.idCarrinho)} style={{background:'none', border:'none', color:'red', cursor:'pointer', fontSize:'0.7rem', fontWeight: 600}}>Excluir</button>
+                  <button onClick={() => removeFromCart(item.idCarrinho)} style={{background:'none', border:'none', color:'red', cursor:'pointer', fontSize:'0.65rem', fontWeight: 600}}>Excluir</button>
                 </div>
               ))}
             </div>
 
-            <div style={{marginTop:'30px', borderTop:'2px solid var(--pink-sweet)', paddingTop:'20px'}}>
-              <div style={{display:'flex', justifyContent:'space-between', fontSize:'0.9rem', marginBottom: '15px', fontWeight: 600}}>
+            <div style={{marginTop:'25px', borderTop:'2px solid var(--pink-sweet)', paddingTop:'15px'}}>
+              <div style={{display:'flex', justifyContent:'space-between', fontSize:'0.85rem', marginBottom: '12px', fontWeight: 600}}>
                 <span>VALOR TOTAL:</span>
-                <span style={{color:'var(--pink-glow)', fontSize: '1.2rem', fontWeight: 800}}>R$ {totalCart.toFixed(2)}</span>
+                <span style={{color:'var(--pink-glow)', fontSize: '1.1rem', fontWeight: 800}}>R$ {totalCart.toFixed(2)}</span>
               </div>
               <button className="primary-btn" onClick={finalizarPedido}>ENVIAR PEDIDO PRO WHATSAPP</button>
             </div>
@@ -870,13 +855,13 @@ export default function DocesDaRosaSite() {
       </div>
 
       <div className={`drawer ${formOpen ? 'open' : ''}`}>
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '2px solid var(--pink-sweet)', paddingBottom: '15px'}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '2px solid var(--pink-sweet)', paddingBottom: '12px'}}>
           <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.1rem', margin:0, color: 'var(--pink-glow)'}}>{editingId ? 'EDITAR DOCE' : 'ADICIONAR DOCE'}</h2>
-          <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'4px', fontWeight: 700}}>FECHAR</button>
+          <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px', fontWeight: 700}}>FECHAR</button>
         </div>
 
-        <div style={{background: 'var(--pink-light)', padding: '15px', borderRadius: '12px', marginTop: '15px', border: '1.5px solid #ffd1dc'}}>
-          <h3 style={{fontSize: '0.8rem', margin: '0 0 10px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>📂 Gerenciar Categorias</h3>
+        <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '12px', border: '1.5px solid #ffd1dc'}}>
+          <h3 style={{fontSize: '0.75rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>📂 Gerenciar Categorias</h3>
           
           <div style={{display: 'flex', gap: '5px', marginTop: '5px'}}>
             <input 
@@ -884,36 +869,36 @@ export default function DocesDaRosaSite() {
               placeholder="Nome da categoria" 
               value={novaCatNome} 
               onChange={e => setNovaCatNome(e.target.value)}
-              style={{flex: 1, padding: '8px', fontSize: '0.75rem', borderRadius: '6px', border: '1.5px solid #ffd1dc', background: '#fff'}}
+              style={{flex: 1, padding: '7px', fontSize: '0.7rem', borderRadius: '5px', border: '1.5px solid #ffd1dc', background: '#fff'}}
             />
             <select 
               value={novaCatGrupo} 
               onChange={e => setNovaCatGrupo(e.target.value)}
-              style={{width: '110px', padding: '8px', fontSize: '0.75rem', borderRadius: '6px', border: '1.5px solid #ffd1dc', background: '#fff'}}
+              style={{width: '100px', padding: '7px', fontSize: '0.7rem', borderRadius: '5px', border: '1.5px solid #ffd1dc', background: '#fff'}}
             >
               <option value="DIARIO">Hoje</option>
               <option value="ENCOMENDAS">Encomenda</option>
             </select>
             <button 
               onClick={handleCriarCategoria}
-              style={{background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem'}}
+              style={{background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '0 10px', borderRadius: '5px', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem'}}
             >
               CRIAR
             </button>
           </div>
 
-          <div style={{marginTop: '12px'}}>
-            <p style={{fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-brown)', textTransform: 'uppercase', marginBottom: '6px'}}>Suas Categorias (Toque no ✕ para apagar):</p>
-            <div style={{display: 'flex', flexWrap: 'wrap', gap: '5px', maxHeight: '100px', overflowY: 'auto', background: '#fff', padding: '8px', borderRadius: '6px', border: '1px solid #ffd1dc'}}>
+          <div style={{marginTop: '10px'}}>
+            <p style={{fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-brown)', textTransform: 'uppercase', marginBottom: '5px'}}>Suas Categorias (Toque no ✕ para apagar):</p>
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '90px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '5px', border: '1px solid #ffd1dc'}}>
               {categoriasMap[novaCatGrupo]?.map(cat => (
                 <span 
                   key={cat} 
-                  style={{fontSize: '0.65rem', background: '#ffd1dc', color: 'var(--text-brown)', padding: '3px 8px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700}}
+                  style={{fontSize: '0.6rem', background: '#ffd1dc', color: 'var(--text-brown)', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700}}
                 >
                   {cat.toUpperCase()}
                   <button 
                     onClick={() => handleExcluirCategoria(novaCatGrupo, cat)}
-                    style={{background: 'none', border: 'none', color: 'var(--pink-glow)', cursor: 'pointer', fontWeight: 900, fontSize: '0.7rem'}}
+                    style={{background: 'none', border: 'none', color: 'var(--pink-glow)', cursor: 'pointer', fontWeight: 900, fontSize: '0.65rem'}}
                   >
                     ✕
                   </button>
@@ -923,7 +908,7 @@ export default function DocesDaRosaSite() {
           </div>
         </div>
 
-        <div className="admin-form" style={{marginTop: '15px'}}>
+        <div className="admin-form" style={{marginTop: '12px'}}>
           <label>Nome do Doce</label>
           <input 
             type="text" 
@@ -970,9 +955,9 @@ export default function DocesDaRosaSite() {
           <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
 
           {productForm.fotos?.length > 0 && (
-            <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginTop:'10px'}}>
+            <div style={{display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'8px'}}>
               {productForm.fotos.map((f: string, i: number) => (
-                <img key={i} src={f} alt="" style={{width:'50px', height:'50px', objectFit:'cover', borderRadius:'6px'}} />
+                <img key={i} src={f} alt="" style={{width:'45px', height:'45px', objectFit:'cover', borderRadius:'5px'}} />
               ))}
             </div>
           )}
@@ -980,12 +965,12 @@ export default function DocesDaRosaSite() {
           <label>Alterar Fundo do Banner</label>
           <input type="file" accept="image/*" onChange={handleBannerBackgroundUpload} />
 
-          <div style={{display:'flex', gap:'10px', marginTop:'20px'}}>
+          <div style={{display:'flex', gap:'8px', marginTop:'18px'}}>
             <button className="primary-btn" onClick={handleSave}>SALVAR DOCE</button>
             {editingId && (
               <button 
                 onClick={() => handleDelete()} 
-                style={{background:'red', color:'#fff', border:'none', padding:'12px', borderRadius:'12px', cursor:'pointer', fontWeight:800, fontSize:'0.75rem'}}
+                style={{background:'red', color:'#fff', border:'none', padding:'10px', borderRadius:'10px', cursor:'pointer', fontWeight:800, fontSize:'0.7rem'}}
               >
                 EXCLUIR
               </button>
