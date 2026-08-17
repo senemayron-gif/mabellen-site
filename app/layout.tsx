@@ -1,29 +1,30 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ClientInit from "./ClientInit"; // Importa o componente que você acabou de criar
+import ClientInit from "./ClientInit"; // Importa o componente de inicialização
 
-const LOGO_URL = "https://hhzqgrnuedzabacarjoi.supabase.co/storage/v1/object/public/logo%20mabellen.jpeg/mabellen-logo.jpeg.jpeg";
+const LOGO_URL = "/icon-512.png";
 
 export const metadata: Metadata = {
-  title: "Mabellen - Loja Virtual",
-  description: "Sua moda íntima com elegância e conforto.",
+  title: "Doces da Rosa",
+  description: "Rosa Confeitaria: bolos no pote, copos da felicidade, sobremesas exclusivas e bolos caseiros feitos com muito carinho.",
   manifest: "/manifest.json",
-  themeColor: "#c9a96e",
+  themeColor: "#e91e63",
   icons: {
     icon: LOGO_URL,
     apple: LOGO_URL,
   },
   openGraph: {
-    title: "Mabellen - Loja Virtual",
-    description: "Sua moda íntima com elegância e conforto.",
-    url: "https://mabellen-loja.vercel.app",
-    siteName: "Mabellen",
+    title: "Doces da Rosa",
+    description: "Rosa Confeitaria: bolos no pote, copos da felicidade, sobremesas exclusivas e bolos caseiros feitos com muito carinho.",
+
+    url: "https://doces-da-rosa-ba2l.vercel.app",
+    siteName: "Doces da Rosa",
     images: [
       {
         url: LOGO_URL,
         width: 1200,
         height: 630,
-        alt: "Mabellen Logo",
+        alt: "Doces da Rosa Logo",
       },
     ],
     locale: "pt_BR",
@@ -39,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body>
-        <ClientInit /> {/* Isso ativa o OneSignal no celular do cliente */}
+        <ClientInit />
         {children}
       </body>
     </html>
