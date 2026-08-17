@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 const TAMANHOS_OPCOES = ['P', 'M', 'G']; 
-const WHATSAPP_NUM = '5544988585472'; // Maringá/PR
+const WHATSAPP_NUM = '554497162755'; // Maringá/PR
 
 export default function DocesDaRosaSite() {
   const [products, setProducts] = useState<any[]>([]);
