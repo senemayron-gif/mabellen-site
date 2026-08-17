@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-const TAMANHOS_OPCOES = ['P', 'M', 'G']; 
 const WHATSAPP_NUM = '554497162755'; // Maringá/PR
 
 export default function DocesDaRosaSite() {
@@ -25,12 +24,11 @@ export default function DocesDaRosaSite() {
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   const [backgroundImage, setBackgroundImage] = useState<string>('https://images.unsplash.com/photo-1511018556340-d16986a1c194?q=80&w=1200');
 
-  const [selectedSize, setSelectedSize] = useState<Record<string, string>>({});
   const [selectedColor, setSelectedColor] = useState<Record<string, string>>({}); 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
   const [productForm, setProductForm] = useState<any>({
-    nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], estoque: {}, cores: '', ativo: true
+    nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], cores: '', ativo: true
   });
 
   useEffect(() => {
@@ -57,7 +55,6 @@ export default function DocesDaRosaSite() {
           categoria: 'copo da felicidade',
           fotos: ['https://i.postimg.cc/q79R42Vq/image-329e21.png'],
           cores: 'Tradicional, Chocolate Belga',
-          estoque: { P: 15, M: 10 },
           ativo: true
         }
       ];
@@ -110,19 +107,15 @@ export default function DocesDaRosaSite() {
   const resetForm = () => {
     setEditingId(null);
     const primeiraCatDoGrupo = categoriasMap[productForm.genero]?.[0] || '';
-    setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], estoque: {}, cores: '', ativo: true });
+    setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], cores: '', ativo: true });
   };
 
   const addToCart = (prod: any) => {
-    const size = selectedSize[prod.id];
     const sabor = selectedColor[prod.id] || 'N/A';
     const qty = selectedQty[prod.id] || 1;
 
-    if (!size) return alert("Por favor, selecione o tamanho do doce!");
-
     const itemExistenteIndex = cart.findIndex(item => 
       item.id === prod.id && 
-      item.tamanhoEscolhido === size && 
       item.corEscolhida === sabor
     );
 
@@ -134,7 +127,6 @@ export default function DocesDaRosaSite() {
       const itemCarrinho = { 
         idCarrinho: Date.now(), 
         ...prod, 
-        tamanhoEscolhido: size,
         corEscolhida: sabor, 
         quantidadeEscolhida: qty,
         selecionado: true
@@ -142,7 +134,6 @@ export default function DocesDaRosaSite() {
       setCart([...cart, itemCarrinho]);
     }
 
-    setSelectedSize({ ...selectedSize, [prod.id]: '' });
     setSelectedColor({ ...selectedColor, [prod.id]: '' });
     setSelectedQty({ ...selectedQty, [prod.id]: 1 });
     setCartOpen(true);
@@ -162,7 +153,7 @@ export default function DocesDaRosaSite() {
 
     let msg = `*NOVO PEDIDO - DOCES DA ROSA* 🌸\n\n`;
     itensSelecionados.forEach(item => {
-      msg += `• ${item.quantidadeEscolhida}x ${item.nome} (${item.tamanhoEscolhido} - Sabor: ${item.corEscolhida}) - R$ ${(item.preco * item.quantidadeEscolhida).toFixed(2)}\n`;
+      msg += `• ${item.quantidadeEscolhida}x ${item.nome} (Sabor: ${item.corEscolhida}) - R$ ${(item.preco * item.quantidadeEscolhida).toFixed(2)}\n`;
     });
     msg += `\n*TOTAL DO PEDIDO: R$ ${totalCart.toFixed(2)}*\n\n_Gostaria de combinar a entrega/retirada em Maringá!_`;
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
@@ -817,19 +808,6 @@ export default function DocesDaRosaSite() {
                 <p className="product-name">{prod.nome}</p>
                 <p className="product-price">R$ {Number(prod.preco).toFixed(2)}</p>
 
-                <span className="selector-label">Escolha o Tamanho</span>
-                <div className="options-container">
-                  {TAMANHOS_OPCOES.map(t => (
-                    <button 
-                      key={t}
-                      className={`opt-btn ${selectedSize[prod.id] === t ? 'active' : ''}`}
-                      onClick={() => setSelectedSize({...selectedSize, [prod.id]: t})}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-
                 {prod.cores && (
                   <>
                     <span className="selector-label">Escolha o Sabor</span>
@@ -871,7 +849,7 @@ export default function DocesDaRosaSite() {
                   <div style={{flex:1}}>
                     <p style={{fontSize:'0.8rem', fontWeight:'700', margin:0, color: 'var(--text-brown)'}}>{item.nome}</p>
                     <p style={{fontSize:'0.7rem', color:'#888', margin:'4px 0'}}>
-                      Tamanho: {item.tamanhoEscolhido} | Sabor: {item.corEscolhida}
+                      Sabor: {item.corEscolhida}
                     </p>
                     <p style={{fontSize:'0.85rem', fontWeight:'700', color:'var(--pink-glow)', margin:0}}>R$ {Number(item.preco).toFixed(2)}</p>
                   </div>
