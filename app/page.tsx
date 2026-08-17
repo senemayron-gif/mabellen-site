@@ -11,8 +11,11 @@ export default function DocesDaRosaSite() {
   const [formOpen, setFormOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false); 
   const [genderFilter, setGenderFilter] = useState('DIARIO'); 
-  const [subFilter, setSubFilter] = useState('TODOS');
+  const [subFilter, setSubFilter] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Estado para data e hora da encomenda
+  const [dataEncomenda, setDataEncomenda] = useState('');
 
   // Estado para controle do índice da foto atual em cada card
   const [currentImageIndex, setCurrentImageIndex] = useState<Record<string, number>>({});
@@ -38,8 +41,15 @@ export default function DocesDaRosaSite() {
 
   useEffect(() => {
     const savedCats = localStorage.getItem('doces_categorias_v4');
+    let catsAtuais = categoriasMap;
     if (savedCats) {
-      setCategoriasMap(JSON.parse(savedCats));
+      catsAtuais = JSON.parse(savedCats);
+      setCategoriasMap(catsAtuais);
+    }
+
+    // Inicializa o subfiltro com a primeira categoria do grupo padrão se estiver vazio
+    if (!subFilter && catsAtuais[genderFilter]?.[0]) {
+      setSubFilter(catsAtuais[genderFilter][0]);
     }
 
     const savedBg = localStorage.getItem('doces_banner_fundo');
@@ -173,10 +183,22 @@ export default function DocesDaRosaSite() {
     const itensSelecionados = cart.filter(item => item.selecionado);
     if (itensSelecionados.length === 0) return alert("Selecione ao menos um doce na sua sacola!");
 
+    // Se houver produtos de encomenda ou se a aba atual for ENCOMENDAS, exige data/hora
+    const temEncomenda = genderFilter === 'ENCOMENDAS' || itensSelecionados.some(i => i.genero === 'ENCOMENDAS');
+    if (temEncomenda && !dataEncomenda) {
+      return alert("Por favor, informe a Data e Hora desejada para a sua encomenda!");
+    }
+
     let msg = `*NOVO PEDIDO - DOCES DA ROSA* 🌸\n\n`;
     itensSelecionados.forEach(item => {
       msg += `• ${item.quantidadeEscolhida}x ${item.nome} - R$ ${(item.preco * item.quantidadeEscolhida).toFixed(2)}\n`;
     });
+
+    if (temEncomenda && dataEncomenda) {
+      const dataFormatada = new Date(dataEncomenda).toLocaleString('pt-BR');
+      msg += `\n📅 *Data/Hora para Encomenda:* ${dataFormatada}\n`;
+    }
+
     msg += `\n*TOTAL DO PEDIDO: R$ ${totalCart.toFixed(2)}*\n\n_Gostaria de combinar a entrega/retirada em Maringá!_`;
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
   };
@@ -259,7 +281,7 @@ export default function DocesDaRosaSite() {
   }
 
   const filtered = products.filter(p => 
-    p.genero === genderFilter && (subFilter === 'TODOS' || p.categoria === subFilter)
+    p.genero === genderFilter && (subFilter === '' || p.categoria === subFilter)
   );
 
   const cssStyles = `
@@ -556,7 +578,6 @@ export default function DocesDaRosaSite() {
       transform: scale(1.05);
     }
 
-    /* Setas para passar as fotos */
     .slider-btn {
       position: absolute;
       top: 50%;
@@ -583,7 +604,6 @@ export default function DocesDaRosaSite() {
     .slider-btn.prev { left: 10px; }
     .slider-btn.next { right: 10px; }
 
-    /* Indicador de bolinhas da foto */
     .slider-dots {
       position: absolute;
       bottom: 10px;
@@ -865,7 +885,10 @@ export default function DocesDaRosaSite() {
           <button 
             key={g} 
             className={genderFilter === g ? 'active-gender' : ''}
-            onClick={() => { setGenderFilter(g); setSubFilter('TODOS'); }}
+            onClick={() => { 
+              setGenderFilter(g); 
+              setSubFilter(categoriasMap[g]?.[0] || ''); 
+            }}
           >
             {g === 'DIARIO' ? '🧁 Disponíveis Hoje' : '📅 Encomendas Especiais'}
           </button>
@@ -873,9 +896,14 @@ export default function DocesDaRosaSite() {
       </nav>
 
       <div className="sub-nav">
-        <button className={`sub-btn ${subFilter === 'TODOS' ? 'active' : ''}`} onClick={() => setSubFilter('TODOS')}>TODOS</button>
         {categoriasMap[genderFilter]?.map(cat => (
-          <button key={cat} className={`sub-btn ${subFilter === cat ? 'active' : ''}`} onClick={() => setSubFilter(cat)}>{cat.toUpperCase()}</button>
+          <button 
+            key={cat} 
+            className={`sub-btn ${subFilter === cat ? 'active' : ''}`} 
+            onClick={() => setSubFilter(cat)}
+          >
+            {cat.toUpperCase()}
+          </button>
         ))}
       </div>
 
@@ -938,7 +966,6 @@ export default function DocesDaRosaSite() {
         })}
       </main>
 
-      {/* Modal para ampliar imagem em tela cheia */}
       {modalImage && (
         <div 
           onClick={() => setModalImage(null)}
@@ -984,6 +1011,21 @@ export default function DocesDaRosaSite() {
                 </div>
               ))}
             </div>
+
+            {/* CAMPO DE DATA E HORA EXCLUSIVO PARA ENCOMENDAS */}
+            {(genderFilter === 'ENCOMENDAS' || cart.some(item => item.genero === 'ENCOMENDAS')) && (
+              <div style={{marginTop: '20px', background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc'}}>
+                <label style={{display: 'block', fontSize: '0.7rem', fontWeight: 700, color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '6px'}}>
+                  📅 Data e Hora da Encomenda (Obrigatório):
+                </label>
+                <input 
+                  type="datetime-local" 
+                  value={dataEncomenda}
+                  onChange={(e) => setDataEncomenda(e.target.value)}
+                  style={{width: '100%', padding: '10px', background: '#fff', color: 'var(--text-brown)', border: '1.5px solid #ffd1dc', fontSize: '0.75rem', borderRadius: '6px'}}
+                />
+              </div>
+            )}
 
             <div style={{marginTop:'25px', borderTop:'2px solid var(--pink-sweet)', paddingTop:'15px'}}>
               <div style={{display:'flex', justifyContent:'space-between', fontSize:'0.85rem', marginBottom: '12px', fontWeight: 600}}>
