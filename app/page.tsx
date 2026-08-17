@@ -17,7 +17,7 @@ export default function DocesDaRosaSite() {
 
   // ESTADO DE CATEGORIAS DINÂMICAS
   const [categoriasMap, setCategoriasMap] = useState<Record<string, string[]>>({
-    DIARIO: ['bolo no pote', 'copo da felicidade', 'fatias de torta', 'docinhos individuais'],
+    DIARIO: ['bolo no pote', 'copo da felicidade', 'docinhos individuais'],
     ENCOMENDAS: ['bolos festivos', 'cento de docinhos', 'tortas inteiras', 'kits presente']
   });
 
