@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 // ⚠️ Insira aqui as suas credenciais do Supabase
-const SUPABASE_URL = 'SUA_URL_DO_SUPABASE';
-const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_DO_SUPABASE';
+const SUPABASE_URL = 'https://hhzqgrnuedzabacarjoi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_bAaKr5Q5NR576NQSlTOD7w_eA0Beql8';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const WHATSAPP_NUM = '554497162755'; // Maringá/PR[cite: 1]
