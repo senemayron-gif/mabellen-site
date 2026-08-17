@@ -8,7 +8,7 @@ const SUPABASE_URL = 'SUA_URL_DO_SUPABASE';
 const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_DO_SUPABASE';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const WHATSAPP_NUM = '554497162755'; // Maringá/PR
+const WHATSAPP_NUM = '554497162755'; // Maringá/PR[cite: 1]
 
 export default function DocesDaRosaSite() {
   const [products, setProducts] = useState<any[]>([]);
