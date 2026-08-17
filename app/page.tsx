@@ -902,7 +902,7 @@ export default function DocesDaRosaSite() {
           <span className="hero-badge">🧁 Feitos com Carinho em Maringá</span>
           <h1 className="hero-title-main">Doces</h1>
           <h2 className="hero-title-sub">da Rosa</h2>
-          <p className="hero-subtitle">Muitos brigadeiros, copos recheados e fatias deliciosas!</p>
+          <p className="hero-subtitle">Doces irresistíveis, feitos com carinho para deixar seu momento ainda mais especial!!</p>
         </div>
       </section>
 
