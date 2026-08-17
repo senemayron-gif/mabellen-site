@@ -1,6 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// ⚠️ Insira aqui as suas credenciais do Supabase
+const SUPABASE_URL = 'SUA_URL_DO_SUPABASE';
+const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_DO_SUPABASE';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const WHATSAPP_NUM = '554497162755'; // Maringá/PR
 
@@ -14,16 +20,10 @@ export default function DocesDaRosaSite() {
   const [subFilter, setSubFilter] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Estado para data e hora da encomenda
   const [dataEncomenda, setDataEncomenda] = useState('');
-
-  // Estado para controle do índice da foto atual em cada card
   const [currentImageIndex, setCurrentImageIndex] = useState<Record<string, number>>({});
-  
-  // Estado para modal de zoom da imagem
   const [modalImage, setModalImage] = useState<string | null>(null);
 
-  // ESTADO DE CATEGORIAS DINÂMICAS
   const [categoriasMap, setCategoriasMap] = useState<Record<string, string[]>>({
     DIARIO: ['bolo no pote', 'copo da felicidade', 'docinhos individuais'],
     ENCOMENDAS: ['bolos festivos', 'cento de docinhos', 'tortas inteiras', 'kits presente']
@@ -39,28 +39,15 @@ export default function DocesDaRosaSite() {
     nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], descricao: '', ativo: true
   });
 
-  useEffect(() => {
-    const savedCats = localStorage.getItem('doces_categorias_v4');
-    let catsAtuais = categoriasMap;
-    if (savedCats) {
-      catsAtuais = JSON.parse(savedCats);
-      setCategoriasMap(catsAtuais);
-    }
-
-    // Inicializa o subfiltro com a primeira categoria do grupo padrão se estiver vazio
-    if (!subFilter && catsAtuais[genderFilter]?.[0]) {
-      setSubFilter(catsAtuais[genderFilter][0]);
-    }
-
-    const savedBg = localStorage.getItem('doces_banner_fundo');
-    if (savedBg) {
-      setBackgroundImage(savedBg);
-    }
-
-    const savedProducts = localStorage.getItem('doces_produtos_teste_v3');
-    if (savedProducts) {
-      setProducts(JSON.parse(savedProducts));
+  // Função para buscar produtos do Supabase
+  const fetchProducts = async () => {
+    const { data, error } = await supabase.from('produtos_doces').select('*');
+    if (error) {
+      console.error('Erro ao buscar produtos:', error);
+    } else if (data && data.length > 0) {
+      setProducts(data);
     } else {
+      // Se estiver vazio, cadastra um produto padrão na nuvem
       const padrao = [
         {
           id: '1',
@@ -73,14 +60,51 @@ export default function DocesDaRosaSite() {
           ativo: true
         }
       ];
+      await supabase.from('produtos_doces').insert(padrao);
       setProducts(padrao);
-      localStorage.setItem('doces_produtos_teste_v3', JSON.stringify(padrao));
     }
+  };
+
+  useEffect(() => {
+    const savedCats = localStorage.getItem('doces_categorias_v4');
+    let catsAtuais = categoriasMap;
+    if (savedCats) {
+      catsAtuais = JSON.parse(savedCats);
+      setCategoriasMap(catsAtuais);
+    }
+
+    if (!subFilter && catsAtuais[genderFilter]?.[0]) {
+      setSubFilter(catsAtuais[genderFilter][0]);
+    }
+
+    const savedBg = localStorage.getItem('doces_banner_fundo');
+    if (savedBg) {
+      setBackgroundImage(savedBg);
+    }
+
+    // Busca inicial do Supabase
+    fetchProducts();
+
+    // Inscreve-se para atualizar em tempo real se outro celular alterar algo
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'produtos_doces' },
+        () => {
+          fetchProducts();
+        }
+      )
+      .subscribe();
 
     const savedCart = localStorage.getItem('docesdarosa_cart');
     if (savedCart) {
       setCart(JSON.parse(savedCart));
     }
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -183,7 +207,6 @@ export default function DocesDaRosaSite() {
     const itensSelecionados = cart.filter(item => item.selecionado);
     if (itensSelecionados.length === 0) return alert("Selecione ao menos um doce na sua sacola!");
 
-    // Se houver produtos de encomenda ou se a aba atual for ENCOMENDAS, exige data/hora
     const temEncomenda = genderFilter === 'ENCOMENDAS' || itensSelecionados.some(i => i.genero === 'ENCOMENDAS');
     if (temEncomenda && !dataEncomenda) {
       return alert("Por favor, informe a Data e Hora desejada para a sua encomenda!");
@@ -243,41 +266,46 @@ export default function DocesDaRosaSite() {
     reader.readAsDataURL(file);
   };
 
-  function handleSave() {
-    let novosProdutos = [...products];
+  async function handleSave() {
     const categoriaDefinida = productForm.categoria || categoriasMap[productForm.genero]?.[0] || '';
     
     const dadosSalvar = {
-      ...productForm,
-      categoria: categoriaDefinida,
+      id: editingId ? editingId : Date.now().toString(),
+      nome: productForm.nome,
       preco: Number(productForm.preco),
+      genero: productForm.genero,
+      categoria: categoriaDefinida,
+      fotos: productForm.fotos,
+      descricao: productForm.descricao,
       ativo: true
     };
 
-    if (editingId) {
-      novosProdutos = novosProdutos.map(p => p.id === editingId ? { ...dadosSalvar, id: editingId } : p);
-    } else {
-      dadosSalvar.id = Date.now().toString();
-      novosProdutos.push(dadosSalvar);
-    }
+    const { error } = await supabase.from('produtos_doces').upsert(dadosSalvar);
 
-    setProducts(novosProdutos);
-    localStorage.setItem('doces_produtos_teste_v3', JSON.stringify(novosProdutos));
-    alert("Doce salvo com sucesso!");
-    setFormOpen(false);
-    resetForm();
+    if (error) {
+      alert("Erro ao salvar no banco de dados: " + error.message);
+    } else {
+      alert("Doce salvo com sucesso!");
+      setFormOpen(false);
+      resetForm();
+      fetchProducts();
+    }
   }
 
-  function handleDelete(id?: string) {
+  async function handleDelete(id?: string) {
     const targetId = id || editingId;
     if (!targetId) return;
     if (!confirm("Deseja realmente excluir este doce?")) return;
 
-    const novos = products.filter(p => p.id !== targetId);
-    setProducts(novos);
-    localStorage.setItem('doces_produtos_teste_v3', JSON.stringify(novos));
-    setFormOpen(false);
-    resetForm();
+    const { error } = await supabase.from('produtos_doces').delete().eq('id', targetId);
+
+    if (error) {
+      alert("Erro ao excluir: " + error.message);
+    } else {
+      setFormOpen(false);
+      resetForm();
+      fetchProducts();
+    }
   }
 
   const filtered = products.filter(p => 
@@ -1012,7 +1040,6 @@ export default function DocesDaRosaSite() {
               ))}
             </div>
 
-            {/* CAMPO DE DATA E HORA EXCLUSIVO PARA ENCOMENDAS */}
             {(genderFilter === 'ENCOMENDAS' || cart.some(item => item.genero === 'ENCOMENDAS')) && (
               <div style={{marginTop: '20px', background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc'}}>
                 <label style={{display: 'block', fontSize: '0.7rem', fontWeight: 700, color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '6px'}}>
