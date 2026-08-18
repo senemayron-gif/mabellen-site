@@ -39,13 +39,20 @@ export default function DocesDaRosaSite() {
     nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], descricao: '', ativo: true
   });
 
-  // Função para buscar produtos do Supabase
+  // Função para buscar produtos e o banner do Supabase
   const fetchProducts = async () => {
     const { data, error } = await supabase.from('produtos_doces').select('*');
     if (error) {
-      console.error('Erro ao buscar produtos:', error);
+      console.error('Erro ao buscar dados:', error);
     } else if (data && data.length > 0) {
-      setProducts(data);
+      // Separa os produtos reais do item de configuração do banner
+      const listaProdutos = data.filter((item: any) => item.id !== 'config_banner_principal');
+      setProducts(listaProdutos);
+
+      const bannerItem = data.find((item: any) => item.id === 'config_banner_principal');
+      if (bannerItem && bannerItem.descricao) {
+        setBackgroundImage(bannerItem.descricao);
+      }
     } else {
       // Se estiver vazio, cadastra um produto padrão na nuvem
       const padrao = [
@@ -77,15 +84,10 @@ export default function DocesDaRosaSite() {
       setSubFilter(catsAtuais[genderFilter][0]);
     }
 
-    const savedBg = localStorage.getItem('doces_banner_fundo');
-    if (savedBg) {
-      setBackgroundImage(savedBg);
-    }
-
     // Busca inicial do Supabase
     fetchProducts();
 
-    // Inscreve-se para atualizar em tempo real se outro celular alterar algo
+    // Inscreve-se para atualizar em tempo real produtos e banner se houver alteração
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -251,16 +253,36 @@ export default function DocesDaRosaSite() {
     }));
   };
 
+  // Alterado para salvar direto no Supabase e atualizar para todos os clientes
   const handleBannerBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       if (typeof reader.result === 'string') {
-        setBackgroundImage(reader.result);
-        localStorage.setItem('doces_banner_fundo', reader.result);
-        alert("Imagem de fundo do banner alterada com sucesso!");
+        const novaImagem = reader.result;
+        setBackgroundImage(novaImagem);
+
+        // Salva na mesma tabela do Supabase usando um ID reservado para o banner
+        const dadosBanner = {
+          id: 'config_banner_principal',
+          nome: 'Banner Principal',
+          preco: 0,
+          genero: 'CONFIG',
+          categoria: 'banner',
+          fotos: [],
+          descricao: novaImagem, // Guardamos a imagem em base64 na descrição para aproveitar a estrutura
+          ativo: true
+        };
+
+        const { error } = await supabase.from('produtos_doces').upsert(dadosBanner);
+
+        if (error) {
+          alert("Erro ao salvar o banner na nuvem: " + error.message);
+        } else {
+          alert("Banner alterado e sincronizado com sucesso para todos os clientes!");
+        }
       }
     };
     reader.readAsDataURL(file);
