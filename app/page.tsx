@@ -32,7 +32,8 @@ export default function DocesDaRosaSite() {
   const [novaCatNome, setNovaCatNome] = useState('');
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   
-  const backgroundImage = '/banner.png';
+  // Imagem de banner robusta (substitui o arquivo local caso dê conflito)
+  const backgroundImage = 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=1600&q=80';
 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
@@ -54,7 +55,7 @@ export default function DocesDaRosaSite() {
   };
 
   const fetchCategorias = async () => {
-    const { data } = await supabase.from('produtos_doces').select('*').eq('id', 'config_categorias_v9').single();
+    const { data, error } = await supabase.from('produtos_doces').select('*').eq('id', 'config_categorias_v9').maybeSingle();
     if (data && data.categorias) {
       setCategoriasMap(data.categorias);
       if (!subFilter || !data.categorias[genderFilter]?.includes(subFilter)) {
@@ -119,12 +120,17 @@ export default function DocesDaRosaSite() {
       setSubFilter(novasCategorias[grupo][0] || '');
     }
 
-    await supabase.from('produtos_doces').upsert({
+    const { error } = await supabase.from('produtos_doces').upsert({
       id: 'config_categorias_v9',
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
       categorias: novasCategorias
     });
+
+    if (error) {
+      alert("Erro ao excluir categoria no banco: " + error.message);
+      fetchCategorias();
+    }
   };
 
   const resetForm = () => {
