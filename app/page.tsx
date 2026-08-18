@@ -8,7 +8,7 @@ const SUPABASE_URL = 'https://hhzqgrnuedzabacarjoi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bAaKr5Q5NR576NQSlTOD7w_eA0Beql8';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const WHATSAPP_NUM = '554497162755'; // Maringá/PR[cite: 1]
+const WHATSAPP_NUM = '554497162755'; // Maringá/PR
 
 export default function DocesDaRosaSite() {
   const [products, setProducts] = useState<any[]>([]);
@@ -31,6 +31,8 @@ export default function DocesDaRosaSite() {
 
   const [novaCatNome, setNovaCatNome] = useState('');
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
+  
+  // Banner volta a ser gerenciado de forma isolada e limpa
   const [backgroundImage, setBackgroundImage] = useState<string>('https://images.unsplash.com/photo-1511018556340-d16986a1c194?q=80&w=1200');
 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
@@ -39,22 +41,16 @@ export default function DocesDaRosaSite() {
     nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], descricao: '', ativo: true
   });
 
-  // Função para buscar produtos e o banner do Supabase
+  // Função para buscar apenas os produtos reais do Supabase
   const fetchProducts = async () => {
     const { data, error } = await supabase.from('produtos_doces').select('*');
     if (error) {
       console.error('Erro ao buscar dados:', error);
     } else if (data && data.length > 0) {
-      // Separa os produtos reais do item de configuração do banner
-      const listaProdutos = data.filter((item: any) => item.id !== 'config_banner_principal');
+      // Filtra caso tenha ficado algum registro antigo de banner na tabela
+      const listaProdutos = data.filter((item: any) => item.id !== 'config_banner_principal' && item.genero !== 'CONFIG');
       setProducts(listaProdutos);
-
-      const bannerItem = data.find((item: any) => item.id === 'config_banner_principal');
-      if (bannerItem && bannerItem.descricao) {
-        setBackgroundImage(bannerItem.descricao);
-      }
     } else {
-      // Se estiver vazio, cadastra um produto padrão na nuvem
       const padrao = [
         {
           id: '1',
@@ -84,10 +80,14 @@ export default function DocesDaRosaSite() {
       setSubFilter(catsAtuais[genderFilter][0]);
     }
 
-    // Busca inicial do Supabase
+    // Carregar banner salvo localmente ou do navegador
+    const savedBg = localStorage.getItem('doces_banner_fundo_v2');
+    if (savedBg) {
+      setBackgroundImage(savedBg);
+    }
+
     fetchProducts();
 
-    // Inscreve-se para atualizar em tempo real produtos e banner se houver alteração
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -253,36 +253,18 @@ export default function DocesDaRosaSite() {
     }));
   };
 
-  // Alterado para salvar direto no Supabase e atualizar para todos os clientes
+  // Função isolada e segura para alterar o banner
   const handleBannerBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onloadend = async () => {
+    reader.onloadend = () => {
       if (typeof reader.result === 'string') {
         const novaImagem = reader.result;
         setBackgroundImage(novaImagem);
-
-        // Salva na mesma tabela do Supabase usando um ID reservado para o banner
-        const dadosBanner = {
-          id: 'config_banner_principal',
-          nome: 'Banner Principal',
-          preco: 0,
-          genero: 'CONFIG',
-          categoria: 'banner',
-          fotos: [],
-          descricao: novaImagem, // Guardamos a imagem em base64 na descrição para aproveitar a estrutura
-          ativo: true
-        };
-
-        const { error } = await supabase.from('produtos_doces').upsert(dadosBanner);
-
-        if (error) {
-          alert("Erro ao salvar o banner na nuvem: " + error.message);
-        } else {
-          alert("Banner alterado e sincronizado com sucesso para todos os clientes!");
-        }
+        localStorage.setItem('doces_banner_fundo_v2', novaImagem);
+        alert("Banner alterado com sucesso!");
       }
     };
     reader.readAsDataURL(file);
