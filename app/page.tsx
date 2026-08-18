@@ -402,10 +402,10 @@ export default function DocesDaRosaSite() {
     .hero-section { 
       position: relative; 
       width: 100%; 
-      height: 45vh; 
-      min-height: 320px; 
+      height: 400px; 
       background-size: cover; 
-      background-position: center; 
+      background-position: center center; 
+      background-repeat: no-repeat;
       display: flex; 
       align-items: center; 
       justify-content: center; 
