@@ -53,7 +53,7 @@ export default function DocesDaRosaSite() {
   };
 
   useEffect(() => {
-    const savedCats = localStorage.getItem('doces_categorias_v6');
+    const savedCats = localStorage.getItem('doces_categorias_v7');
     let catsAtuais = categoriasMap;
     if (savedCats) {
       catsAtuais = JSON.parse(savedCats);
@@ -73,19 +73,10 @@ export default function DocesDaRosaSite() {
       })
       .subscribe();
 
-    const savedCart = localStorage.getItem('docesdarosa_cart_v2');
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('docesdarosa_cart_v2', JSON.stringify(cart));
-  }, [cart]);
 
   const handleCriarCategoria = () => {
     if (!novaCatNome.trim()) return alert("Digite o nome da categoria!");
@@ -102,7 +93,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v6', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v7', JSON.stringify(novasCategorias));
     setNovaCatNome('');
   };
 
@@ -115,7 +106,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v6', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v7', JSON.stringify(novasCategorias));
   };
 
   const resetForm = () => {
@@ -146,28 +137,36 @@ export default function DocesDaRosaSite() {
   };
 
   const addToCart = (prod: any) => {
-    const qty = selectedQty[prod.id] || 1;
-    const fotoPrincipal = prod.fotos?.[currentImageIndex[prod.id] || 0] || prod.fotos?.[0] || '';
+    try {
+      const qty = selectedQty[prod.id] || 1;
+      const fotoPrincipal = prod.fotos?.[currentImageIndex[prod.id] || 0] || prod.fotos?.[0] || '';
 
-    const itemExistenteIndex = cart.findIndex(item => item.id === prod.id);
+      const itemExistenteIndex = cart.findIndex(item => item.id === prod.id);
 
-    if (itemExistenteIndex !== -1) {
-      const novoCarrinho = [...cart];
-      novoCarrinho[itemExistenteIndex].quantidadeEscolhida += qty;
-      setCart(novoCarrinho);
-    } else {
-      const itemCarrinho = { 
-        idCarrinho: Date.now(), 
-        ...prod, 
-        fotoEscolhida: fotoPrincipal,
-        quantidadeEscolhida: qty,
-        selecionado: true
-      };
-      setCart([...cart, itemCarrinho]);
+      if (itemExistenteIndex !== -1) {
+        const novoCarrinho = [...cart];
+        novoCarrinho[itemExistenteIndex].quantidadeEscolhida += qty;
+        setCart(novoCarrinho);
+      } else {
+        const itemCarrinho = { 
+          idCarrinho: Date.now() + Math.random(), 
+          id: prod.id,
+          nome: prod.nome,
+          preco: Number(prod.preco) || 0,
+          genero: prod.genero,
+          fotoEscolhida: fotoPrincipal,
+          quantidadeEscolhida: qty,
+          selecionado: true
+        };
+        setCart([...cart, itemCarrinho]);
+      }
+
+      setSelectedQty({ ...selectedQty, [prod.id]: 1 });
+      setCartOpen(true);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao adicionar à sacola. Tente novamente.");
     }
-
-    setSelectedQty({ ...selectedQty, [prod.id]: 1 });
-    setCartOpen(true);
   };
 
   const removeFromCart = (idCarrinho: number) => {
@@ -201,7 +200,6 @@ export default function DocesDaRosaSite() {
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
   };
 
-  // Função redutora de imagem para evitar travamentos e erros de payload
   const handleLocalImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -213,8 +211,8 @@ export default function DocesDaRosaSite() {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
+          const MAX_WIDTH = 600;
+          const MAX_HEIGHT = 600;
           let width = img.width;
           let height = img.height;
 
@@ -235,7 +233,7 @@ export default function DocesDaRosaSite() {
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
 
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
           setProductForm((prev: any) => ({
             ...prev,
             fotos: [...(prev.fotos || []), dataUrl]
@@ -1026,7 +1024,7 @@ export default function DocesDaRosaSite() {
             <div style={{marginTop:'12px'}}>
               {cart.map((item) => (
                 <div key={item.idCarrinho} className="cart-item">
-                  <img src={item.fotoEscolhida || item.fotos?.[0] || ''} alt="" />
+                  <img src={item.fotoEscolhida || ''} alt="" />
                   <div style={{flex:1}}>
                     <p style={{fontSize:'0.75rem', fontWeight:'700', margin:0, color: 'var(--text-brown)'}}>{item.nome}</p>
                     <p style={{fontSize:'0.65rem', color:'#888', margin:'3px 0'}}>
@@ -1204,7 +1202,7 @@ export default function DocesDaRosaSite() {
       </div>
 
       <a 
-        href={`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent("Olá! Gostaria de tirar dúvidas sobre os doces da Rosa em Maringá.")}`} 
+        href={`https://wa.mem/${WHATSAPP_NUM}?text=${encodeURIComponent("Olá! Gostaria de tirar dúvidas sobre os doces da Rosa em Maringá.")}`} 
         className="whatsapp-float" 
         target="_blank" 
         rel="noopener noreferrer"
