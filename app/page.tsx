@@ -2,11 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { initializeApp } from "firebase/app";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 // ⚠️ Credenciais do Supabase
 const SUPABASE_URL = 'https://hhzqgrnuedzabacarjoi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bAaKr5Q5NR576NQSlTOD7w_eA0Beql8';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 🔔 Configurações do Firebase Cloud Messaging (Doces da Rosa)
+const firebaseConfig = {
+  apiKey: "AIzaSyBRSDeWQ74OPndJaGoMPVzaJMW-7O7x2k8",
+  authDomain: "doces-da-rosa.firebaseapp.com",
+  projectId: "doces-da-rosa",
+  storageBucket: "doces-da-rosa.firebasestorage.app",
+  messagingSenderId: "758761602176",
+  appId: "1:758761602176:web:6df2c1d969441714ee3a65",
+  measurementId: "G-XDNFKRJSYG"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const messaging = getMessaging(firebaseApp);
+const VAPID_KEY = 'BIn1iQBcXKFTqTYM6ael1BuVLNJt2JyjkQqOKVdI8fI7RgELX--z8FBBALMDrdPJa89Gr-RrgOXAWfph5SoxRdY';
 
 const WHATSAPP_NUM = '554497162755'; // Maringá/PR
 
@@ -48,6 +65,23 @@ export default function DocesDaRosaSite() {
   const [manualValor, setManualValor] = useState('');
   const [manualData, setManualData] = useState('');
 
+  // 🔔 Função para registrar e salvar o token de notificações Push
+  const solicitarNotificacoes = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+        if (currentToken) {
+          await supabase
+            .from('fcm_tokens')
+            .upsert([{ token: currentToken, created_at: new Date() }], { onConflict: 'token' });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao registrar notificações push:", error);
+    }
+  };
+
   const fetchData = async () => {
     const { data: prodData, error: prodError } = await supabase.from('produtos_doces').select('*');
     if (!prodError && prodData) {
@@ -85,6 +119,14 @@ export default function DocesDaRosaSite() {
   useEffect(() => {
     fetchConfig();
     fetchData();
+    solicitarNotificacoes();
+
+    // Ouve notificações recebidas em primeiro plano
+    const unsubscribeMessage = onMessage(messaging, (payload) => {
+      if (payload.notification) {
+        alert(`${payload.notification.title}\n${payload.notification.body}`);
+      }
+    });
 
     const channel = supabase
       .channel('schema-db-changes')
@@ -96,6 +138,7 @@ export default function DocesDaRosaSite() {
 
     return () => {
       supabase.removeChannel(channel);
+      if (unsubscribeMessage) unsubscribeMessage();
     };
   }, [genderFilter]);
 
