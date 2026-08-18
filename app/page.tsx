@@ -53,15 +53,16 @@ export default function DocesDaRosaSite() {
   };
 
   useEffect(() => {
-    const savedCats = localStorage.getItem('doces_categorias_v7');
+    // 💡 Versão atualizada v8 para limpar o cache antigo do celular automaticamente
+    const savedCats = localStorage.getItem('doces_categorias_v8');
     let catsAtuais = categoriasMap;
     if (savedCats) {
       catsAtuais = JSON.parse(savedCats);
       setCategoriasMap(catsAtuais);
     }
 
-    if (!subFilter && catsAtuais[genderFilter]?.[0]) {
-      setSubFilter(catsAtuais[genderFilter][0]);
+    if (!subFilter || !catsAtuais[genderFilter]?.includes(subFilter)) {
+      setSubFilter(catsAtuais[genderFilter]?.[0] || '');
     }
 
     fetchData();
@@ -76,7 +77,7 @@ export default function DocesDaRosaSite() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [genderFilter]);
 
   const handleCriarCategoria = () => {
     if (!novaCatNome.trim()) return alert("Digite o nome da categoria!");
@@ -93,7 +94,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v7', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v8', JSON.stringify(novasCategorias));
     setNovaCatNome('');
   };
 
@@ -106,7 +107,12 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v7', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v8', JSON.stringify(novasCategorias));
+
+    // Se a categoria excluída era a que estava selecionada, volta para a primeira disponível
+    if (subFilter === catExcluir) {
+      setSubFilter(novasCategorias[grupo][0] || '');
+    }
   };
 
   const resetForm = () => {
