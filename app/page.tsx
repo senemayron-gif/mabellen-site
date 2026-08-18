@@ -40,6 +40,14 @@ export default function DocesDaRosaSite() {
     nome: '', preco: '', genero: 'DIARIO', categoria: 'bolo no pote', fotos: [], descricao: '', ativo: true
   });
 
+  // 💰 Histórico de pedidos salvos para o Financeiro e Lançamento Manual
+  const [historicoPedidos, setHistoricoPedidos] = useState<any[]>([]);
+  const [abaAdminAtiva, setAbaAdminAtiva] = useState<'produtos' | 'financeiro'>('produtos');
+
+  const [manualDesc, setManualDesc] = useState('');
+  const [manualValor, setManualValor] = useState('');
+  const [manualData, setManualData] = useState('');
+
   const fetchData = async () => {
     const { data: prodData, error: prodError } = await supabase.from('produtos_doces').select('*');
     if (!prodError && prodData) {
@@ -51,10 +59,15 @@ export default function DocesDaRosaSite() {
       );
       setProducts(listaLimpa);
     }
+
+    // Buscar histórico de pedidos salvos no banco para o financeiro
+    const { data: pedData } = await supabase.from('produtos_doces').select('*').eq('genero', 'PEDIDO_REGISTRADO');
+    if (pedData) {
+      setHistoricoPedidos(pedData);
+    }
   };
 
   const fetchConfig = async () => {
-    // Buscar Categorias
     const { data: catData } = await supabase.from('produtos_doces').select('*').eq('id', 'config_categorias_v9').maybeSingle();
     if (catData && catData.categorias) {
       setCategoriasMap(catData.categorias);
@@ -63,7 +76,6 @@ export default function DocesDaRosaSite() {
       }
     }
 
-    // Buscar Banner
     const { data: bannerData } = await supabase.from('produtos_doces').select('*').eq('id', 'config_banner_principal').maybeSingle();
     if (bannerData && bannerData.descricao) {
       setBackgroundImage(bannerData.descricao);
@@ -276,7 +288,7 @@ export default function DocesDaRosaSite() {
     item.selecionado ? acc + (item.preco * item.quantidadeEscolhida) : acc
   , 0);
 
-  const finalizarPedido = () => {
+  const finalizarPedido = async () => {
     const itensSelecionados = cart.filter(item => item.selecionado);
     if (itensSelecionados.length === 0) return alert("Selecione ao menos um doce na sua sacola!");
 
@@ -284,6 +296,22 @@ export default function DocesDaRosaSite() {
     if (temEncomenda && !dataEncomenda) {
       return alert("Por favor, informe a Data e Hora desejada para a sua encomenda!");
     }
+
+    const agora = new Date();
+    const pedidoId = 'ped_' + Date.now();
+    const resumoItens = itensSelecionados.map(i => `${i.quantidadeEscolhida}x ${i.nome}`).join(', ');
+
+    // Salvar pedido no banco para o relatório financeiro
+    await supabase.from('produtos_doces').upsert({
+      id: pedidoId,
+      nome: `Pedido: ${resumoItens}`,
+      preco: totalCart,
+      genero: 'PEDIDO_REGISTRADO',
+      categoria: 'FINANCEIRO',
+      descricao: dataEncomenda ? `Encomenda para: ${dataEncomenda}` : 'Pedido Diário',
+      created_at: agora.toISOString(),
+      ativo: true
+    });
 
     let msg = `*NOVO PEDIDO - DOCES DA ROSA* 🌸\n\n`;
     itensSelecionados.forEach(item => {
@@ -296,7 +324,50 @@ export default function DocesDaRosaSite() {
     }
 
     msg += `\n*TOTAL DO PEDIDO: R$ ${totalCart.toFixed(2)}*\n\n_Gostaria de combinar a entrega/retirada em Maringá!_`;
+    
+    setCart([]);
+    setCartOpen(false);
+    fetchData();
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
+  };
+
+  const handleLancarManual = async () => {
+    if (!manualDesc.trim()) return alert("Digite a descrição do pedido/venda!");
+    if (!manualValor || Number(manualValor) <= 0) return alert("Digite um valor válido!");
+
+    const pedidoId = 'manual_' + Date.now();
+    const dataObj = manualData ? new Date(manualData + 'T12:00:00') : new Date();
+
+    const { error } = await supabase.from('produtos_doces').upsert({
+      id: pedidoId,
+      nome: `Manual: ${manualDesc.trim()}`,
+      preco: Number(manualValor),
+      genero: 'PEDIDO_REGISTRADO',
+      categoria: 'FINANCEIRO',
+      descricao: 'Lançamento Manual (Fora do site)',
+      created_at: dataObj.toISOString(),
+      ativo: true
+    });
+
+    if (error) {
+      alert("Erro ao lançar venda manual: " + error.message);
+    } else {
+      alert("Venda manual lançada com sucesso!");
+      setManualDesc('');
+      setManualValor('');
+      setManualData('');
+      fetchData();
+    }
+  };
+
+  const handleDeletarPedido = async (idPedido: string) => {
+    if (!confirm("Deseja realmente apagar este lançamento do financeiro?")) return;
+    const { error } = await supabase.from('produtos_doces').delete().eq('id', idPedido);
+    if (error) {
+      alert("Erro ao excluir: " + error.message);
+    } else {
+      fetchData();
+    }
   };
 
   const handleLocalImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -393,6 +464,20 @@ export default function DocesDaRosaSite() {
       fetchData();
     }
   }
+
+  // Agrupamento Financeiro por Mês
+  const faturamentoPorMes = historicoPedidos.reduce((acc: any, ped: any) => {
+    const dataRef = ped.created_at ? new Date(ped.created_at) : new Date();
+    const mesAno = dataRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+    
+    if (!acc[mesAno]) {
+      acc[mesAno] = { total: 0, quantidade: 0, pedidos: [] };
+    }
+    acc[mesAno].total += Number(ped.preco) || 0;
+    acc[mesAno].quantidade += 1;
+    acc[mesAno].pedidos.push(ped);
+    return acc;
+  }, {});
 
   const filtered = products.filter(p => 
     p.genero === genderFilter && (subFilter === '' || p.categoria === subFilter)
@@ -1164,148 +1249,256 @@ export default function DocesDaRosaSite() {
 
       <div className={`drawer ${formOpen ? 'open' : ''}`}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '2px solid var(--pink-sweet)', paddingBottom: '12px'}}>
-          <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.1rem', margin:0, color: 'var(--pink-glow)'}}>{editingId ? 'EDITAR DOCE' : 'ADICIONAR DOCE'}</h2>
+          <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.1rem', margin:0, color: 'var(--pink-glow)'}}>PAINEL DE ADMINISTRAÇÃO</h2>
           <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'6px', fontWeight: 700}}>FECHAR</button>
         </div>
 
-        {/* 🖼️ BLOCO PARA TROCAR O BANNER DE FUNDO */}
-        <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
-          <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>🖼️ Foto de Fundo do Banner</h3>
-          <p style={{fontSize: '0.62rem', color: 'var(--text-brown)', marginBottom: '8px'}}>Escolha uma foto da sua galeria para o topo do site:</p>
-          <input type="file" accept="image/*" onChange={handleBannerUpload} style={{width: '100%', background: '#fff', padding: '6px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc'}} />
+        {/* ABAS DO PAINEL */}
+        <div style={{display: 'flex', gap: '8px', marginTop: '14px', borderBottom: '1px solid #ffd1dc', paddingBottom: '10px'}}>
+          <button 
+            onClick={() => setAbaAdminAtiva('produtos')}
+            style={{flex: 1, background: abaAdminAtiva === 'produtos' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'produtos' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer'}}
+          >
+            🧁 PRODUTOS & BANNER
+          </button>
+          <button 
+            onClick={() => setAbaAdminAtiva('financeiro')}
+            style={{flex: 1, background: abaAdminAtiva === 'financeiro' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'financeiro' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer'}}
+          >
+            💰 FINANCEIRO MÊS A MÊS
+          </button>
         </div>
 
-        <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
-          <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>📂 Gerenciar Categorias</h3>
-          
-          <div style={{display: 'flex', gap: '6px', marginTop: '5px'}}>
-            <input 
-              type="text" 
-              placeholder="Nome da categoria" 
-              value={novaCatNome} 
-              onChange={e => setNovaCatNome(e.target.value)}
-              style={{flex: 1, padding: '8px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc', background: '#fff'}}
-            />
-            <select 
-              value={novaCatGrupo} 
-              onChange={e => setNovaCatGrupo(e.target.value)}
-              style={{width: '100px', padding: '8px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc', background: '#fff'}}
-            >
-              <option value="DIARIO">Hoje</option>
-              <option value="ENCOMENDAS">Encomenda</option>
-            </select>
-            <button 
-              type="button"
-              onClick={handleCriarCategoria}
-              style={{background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem'}}
-            >
-              CRIAR
-            </button>
-          </div>
+        {abaAdminAtiva === 'financeiro' ? (
+          <div style={{marginTop: '15px'}}>
+            <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '10px'}}>📊 Relatório de Faturamento por Mês</h3>
+            
+            {/* LANÇAMENTO MANUAL */}
+            <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '18px'}}>
+              <h4 style={{fontSize: '0.72rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '0 0 8px 0', fontWeight: 700}}>➕ Lançar Venda Externa / Manual</h4>
+              
+              <label style={{display: 'block', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-brown)', textTransform: 'uppercase', marginBottom: '3px'}}>Descrição do Pedido:</label>
+              <input 
+                type="text" 
+                placeholder="Ex: Encomenda bolo aniversário Dona Maria" 
+                value={manualDesc} 
+                onChange={(e) => setManualDesc(e.target.value)}
+                style={{width: '100%', padding: '8px', background: '#fff', color: 'var(--text-brown)', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px', marginBottom: '8px'}}
+              />
 
-          <div style={{marginTop: '10px'}}>
-            <p style={{fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-brown)', textTransform: 'uppercase', marginBottom: '5px'}}>Suas Categorias (Toque no ✕ para apagar):</p>
-            <div style={{display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '90px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '6px', border: '1px solid #ffd1dc'}}>
-              {categoriasMap[novaCatGrupo]?.map(cat => (
-                <span 
-                  key={cat} 
-                  style={{fontSize: '0.6rem', background: '#ffd1dc', color: 'var(--text-brown)', padding: '3px 8px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700}}
-                >
-                  {cat.toUpperCase()}
-                  <button 
-                    type="button"
-                    onClick={() => handleExcluirCategoria(novaCatGrupo, cat)}
-                    style={{background: 'none', border: 'none', color: 'var(--pink-glow)', cursor: 'pointer', fontWeight: 900, fontSize: '0.65rem'}}
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="admin-form" style={{marginTop: '14px'}}>
-          <label>Nome do Doce</label>
-          <input 
-            type="text" 
-            value={productForm.nome} 
-            onChange={e => setProductForm({...productForm, nome: e.target.value})} 
-          />
-
-          <label>Preço (R$)</label>
-          <input 
-            type="number" 
-            step="0.01" 
-            value={productForm.preco} 
-            onChange={e => setProductForm({...productForm, preco: e.target.value})} 
-          />
-
-          <label>Grupo Principal</label>
-          <select 
-            value={productForm.genero} 
-            onChange={e => setProductForm({...productForm, genero: e.target.value, categoria: categoriasMap[e.target.value]?.[0] || ''})}
-          >
-            <option value="DIARIO">Disponíveis Hoje</option>
-            <option value="ENCOMENDAS">Encomendas Especiais</option>
-          </select>
-
-          <label>Categoria Específica</label>
-          <select 
-            value={productForm.categoria} 
-            onChange={e => setProductForm({...productForm, categoria: e.target.value})}
-          >
-            {categoriasMap[productForm.genero]?.map(cat => (
-              <option key={cat} value={cat}>{cat.toUpperCase()}</option>
-            ))}
-          </select>
-
-          <label>Descrição / Ingredientes do Doce</label>
-          <textarea 
-            rows={3}
-            placeholder="Ex: Brigadeiro gourmet + creme de Ninho + morangos..." 
-            value={productForm.descricao} 
-            onChange={e => setProductForm({...productForm, descricao: e.target.value})} 
-          />
-
-          <label>Fotos do Doce (Adicione da Galeria)</label>
-          <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
-
-          {productForm.fotos?.length > 0 && (
-            <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginTop:'10px'}}>
-              {productForm.fotos.map((f: string, i: number) => (
-                <div key={i} style={{position: 'relative', display: 'inline-block'}}>
-                  <img src={f} alt="" style={{width:'55px', height:'55px', objectFit:'cover', borderRadius:'6px', border: '1.5px solid #ffd1dc'}} />
-                  <button 
-                    type="button"
-                    onClick={() => handleRemoveSinglePhoto(i)}
-                    style={{
-                      position: 'absolute', top: '-6px', right: '-6px', background: 'red', color: '#fff',
-                      border: 'none', width: '20px', height: '20px', borderRadius: '50%', fontSize: '10px',
-                      fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                    title="Excluir apenas esta foto"
-                  >
-                    ✕
-                  </button>
+              <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+                <div style={{flex: 1}}>
+                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-brown)', textTransform: 'uppercase', marginBottom: '3px'}}>Valor (R$):</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="0.00" 
+                    value={manualValor} 
+                    onChange={(e) => setManualValor(e.target.value)}
+                    style={{width: '100%', padding: '8px', background: '#fff', color: 'var(--text-brown)', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px'}}
+                  />
                 </div>
-              ))}
-            </div>
-          )}
+                <div style={{flex: 1}}>
+                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-brown)', textTransform: 'uppercase', marginBottom: '3px'}}>Data do Pedido:</label>
+                  <input 
+                    type="date" 
+                    value={manualData} 
+                    onChange={(e) => setManualData(e.target.value)}
+                    style={{width: '100%', padding: '8px', background: '#fff', color: 'var(--text-brown)', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px'}}
+                  />
+                </div>
+              </div>
 
-          <div style={{display:'flex', gap:'8px', marginTop:'20px'}}>
-            <button className="primary-btn" onClick={handleSave}>SALVAR DOCE</button>
-            {editingId && (
               <button 
-                type="button"
-                onClick={() => handleDelete()} 
-                style={{background:'red', color:'#fff', border:'none', padding:'10px 14px', borderRadius:'10px', cursor:'pointer', fontWeight:800, fontSize:'0.7rem'}}
+                type="button" 
+                onClick={handleLancarManual}
+                style={{width: '100%', background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer'}}
               >
-                EXCLUIR
+                ADICIONAR AO FINANCEIRO
               </button>
+            </div>
+
+            {Object.keys(faturamentoPorMes).length === 0 ? (
+              <p style={{fontSize: '0.72rem', color: '#888', textAlign: 'center', marginTop: '20px'}}>Nenhum pedido registrado ainda.</p>
+            ) : (
+              Object.keys(faturamentoPorMes).map((mes) => {
+                const dadosMes = faturamentoPorMes[mes];
+                return (
+                  <div key={mes} style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '12px'}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                      <span style={{fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-brown)'}}>{mes}</span>
+                      <span style={{fontSize: '0.85rem', fontWeight: 900, color: 'var(--pink-glow)'}}>R$ {dadosMes.total.toFixed(2)}</span>
+                    </div>
+                    <p style={{fontSize: '0.65rem', color: '#666', margin: '4px 0 8px 0'}}>Total de pedidos: <b>{dadosMes.quantidade}</b></p>
+                    
+                    <div style={{maxHeight: '120px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '6px', border: '1.5px solid #ffd1dc'}}>
+                      {dadosMes.pedidos.map((p: any) => (
+                        <div key={p.id} style={{fontSize: '0.62rem', borderBottom: '1px solid #f9f0f2', padding: '4px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                          <div style={{paddingRight: '6px', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                            <span>{p.nome}</span>
+                          </div>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0}}>
+                            <span style={{fontWeight: 700, color: 'var(--pink-glow)'}}>R$ {Number(p.preco).toFixed(2)}</span>
+                            <button 
+                              onClick={() => handleDeletarPedido(p.id)}
+                              style={{background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontWeight: 900, fontSize: '0.7rem'}}
+                              title="Excluir lançamento"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
-        </div>
+        ) : (
+          <>
+            {/* 🖼️ BLOCO PARA TROCAR O BANNER DE FUNDO */}
+            <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
+              <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>🖼️ Foto de Fundo do Banner</h3>
+              <p style={{fontSize: '0.62rem', color: 'var(--text-brown)', marginBottom: '8px'}}>Escolha uma foto da sua galeria para o topo do site:</p>
+              <input type="file" accept="image/*" onChange={handleBannerUpload} style={{width: '100%', background: '#fff', padding: '6px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc'}} />
+            </div>
+
+            <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
+              <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>📂 Gerenciar Categorias</h3>
+              
+              <div style={{display: 'flex', gap: '6px', marginTop: '5px'}}>
+                <input 
+                  type="text" 
+                  placeholder="Nome da categoria" 
+                  value={novaCatNome} 
+                  onChange={e => setNovaCatNome(e.target.value)}
+                  style={{flex: 1, padding: '8px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc', background: '#fff'}}
+                />
+                <select 
+                  value={novaCatGrupo} 
+                  onChange={e => setNovaCatGrupo(e.target.value)}
+                  style={{width: '100px', padding: '8px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc', background: '#fff'}}
+                >
+                  <option value="DIARIO">Hoje</option>
+                  <option value="ENCOMENDAS">Encomenda</option>
+                </select>
+                <button 
+                  type="button"
+                  onClick={handleCriarCategoria}
+                  style={{background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem'}}
+                >
+                  CRIAR
+                </button>
+              </div>
+
+              <div style={{marginTop: '10px'}}>
+                <p style={{fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-brown)', textTransform: 'uppercase', marginBottom: '5px'}}>Suas Categorias (Toque no ✕ para apagar):</p>
+                <div style={{display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '90px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '6px', border: '1.5px solid #ffd1dc'}}>
+                  {categoriasMap[novaCatGrupo]?.map(cat => (
+                    <span 
+                      key={cat} 
+                      style={{fontSize: '0.6rem', background: '#ffd1dc', color: 'var(--text-brown)', padding: '3px 8px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700}}
+                    >
+                      {cat.toUpperCase()}
+                      <button 
+                        type="button"
+                        onClick={() => handleExcluirCategoria(novaCatGrupo, cat)}
+                        style={{background: 'none', border: 'none', color: 'var(--pink-glow)', cursor: 'pointer', fontWeight: 900, fontSize: '0.65rem'}}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="admin-form" style={{marginTop: '14px'}}>
+              <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '15px 0 5px 0'}}>{editingId ? '✏️ Editar Doce' : '➕ Cadastrar Novo Doce'}</h3>
+              
+              <label>Nome do Doce</label>
+              <input 
+                type="text" 
+                value={productForm.nome} 
+                onChange={e => setProductForm({...productForm, nome: e.target.value})} 
+              />
+
+              <label>Preço (R$)</label>
+              <input 
+                type="number" 
+                step="0.01" 
+                value={productForm.preco} 
+                onChange={e => setProductForm({...productForm, preco: e.target.value})} 
+              />
+
+              <label>Grupo Principal</label>
+              <select 
+                value={productForm.genero} 
+                onChange={e => setProductForm({...productForm, genero: e.target.value, categoria: categoriasMap[e.target.value]?.[0] || ''})}
+              >
+                <option value="DIARIO">Disponíveis Hoje</option>
+                <option value="ENCOMENDAS">Encomendas Especiais</option>
+              </select>
+
+              <label>Categoria Específica</label>
+              <select 
+                value={productForm.categoria} 
+                onChange={e => setProductForm({...productForm, categoria: e.target.value})}
+              >
+                {categoriasMap[productForm.genero]?.map(cat => (
+                  <option key={cat} value={cat}>{cat.toUpperCase()}</option>
+                ))}
+              </select>
+
+              <label>Descrição / Ingredientes do Doce</label>
+              <textarea 
+                rows={3}
+                placeholder="Ex: Brigadeiro gourmet + creme de Ninho + morangos..." 
+                value={productForm.descricao} 
+                onChange={e => setProductForm({...productForm, descricao: e.target.value})} 
+              />
+
+              <label>Fotos do Doce (Adicione da Galeria)</label>
+              <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
+
+              {productForm.fotos?.length > 0 && (
+                <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginTop:'10px'}}>
+                  {productForm.fotos.map((f: string, i: number) => (
+                    <div key={i} style={{position: 'relative', display: 'inline-block'}}>
+                      <img src={f} alt="" style={{width:'55px', height:'55px', objectFit:'cover', borderRadius:'6px', border: '1.5px solid #ffd1dc'}} />
+                      <button 
+                        type="button"
+                        onClick={() => handleRemoveSinglePhoto(i)}
+                        style={{
+                          position: 'absolute', top: '-6px', right: '-6px', background: 'red', color: '#fff',
+                          border: 'none', width: '20px', height: '20px', borderRadius: '50%', fontSize: '10px',
+                          fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                        title="Excluir apenas esta foto"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{display:'flex', gap:'8px', marginTop:'20px'}}>
+                <button className="primary-btn" onClick={handleSave}>SALVAR DOCE</button>
+                {editingId && (
+                  <button 
+                    type="button"
+                    onClick={() => handleDelete()} 
+                    style={{background:'red', color:'#fff', border:'none', padding:'10px 14px', borderRadius:'10px', cursor:'pointer', fontWeight:800, fontSize:'0.7rem'}}
+                  >
+                    EXCLUIR
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <a 
