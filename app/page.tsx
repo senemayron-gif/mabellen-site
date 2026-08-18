@@ -98,12 +98,19 @@ export default function DocesDaRosaSite() {
     setCategoriasMap(novasCategorias);
     setNovaCatNome('');
 
-    await supabase.from('produtos_doces').upsert({
+    const { error } = await supabase.from('produtos_doces').upsert({
       id: 'config_categorias_v9',
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
+      preco: 0,
+      ativo: true,
       categorias: novasCategorias
     });
+
+    if (error) {
+      alert("Erro ao salvar categoria: " + error.message);
+      fetchCategorias();
+    }
   };
 
   const handleExcluirCategoria = async (grupo: string, catExcluir: string) => {
@@ -124,6 +131,8 @@ export default function DocesDaRosaSite() {
       id: 'config_categorias_v9',
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
+      preco: 0,
+      ativo: true,
       categorias: novasCategorias
     });
 
