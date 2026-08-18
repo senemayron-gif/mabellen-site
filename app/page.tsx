@@ -25,7 +25,7 @@ export default function DocesDaRosaSite() {
   const [modalImage, setModalImage] = useState<string | null>(null);
 
   const [categoriasMap, setCategoriasMap] = useState<Record<string, string[]>>({
-    DIARIO: ['bolo no pote', 'copo da felicidade'], // <--- "docinhos individuais" removido daqui
+    DIARIO: ['bolo no pote', 'copo da felicidade', 'docinhos individuais'],
     ENCOMENDAS: ['bolos festivos', 'cento de docinhos', 'tortas inteiras', 'kits presente']
   });
 
@@ -55,14 +55,11 @@ export default function DocesDaRosaSite() {
   };
 
   useEffect(() => {
-    // ATUALIZADO PARA v6 PARA FORÇAR O CELULAR A LIMPAR O CACHE ANTIGO
-    const savedCats = localStorage.getItem('doces_categorias_v6');
+    const savedCats = localStorage.getItem('doces_categorias_v5');
     let catsAtuais = categoriasMap;
     if (savedCats) {
       catsAtuais = JSON.parse(savedCats);
       setCategoriasMap(catsAtuais);
-    } else {
-      localStorage.setItem('doces_categorias_v6', JSON.stringify(categoriasMap));
     }
 
     if (!subFilter && catsAtuais[genderFilter]?.[0]) {
@@ -107,7 +104,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v6', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v5', JSON.stringify(novasCategorias));
     setNovaCatNome('');
     alert(`Categoria "${nomeLimpo.toUpperCase()}" criada com sucesso!`);
   };
@@ -121,7 +118,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v6', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v5', JSON.stringify(novasCategorias));
   };
 
   const resetForm = () => {
