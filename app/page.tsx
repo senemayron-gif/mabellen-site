@@ -32,7 +32,7 @@ export default function DocesDaRosaSite() {
   const [novaCatNome, setNovaCatNome] = useState('');
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   
-  const backgroundImage = 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=1600&q=80';
+  const [backgroundImage, setBackgroundImage] = useState('https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=1600&q=80');
 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
@@ -53,25 +53,32 @@ export default function DocesDaRosaSite() {
     }
   };
 
-  const fetchCategorias = async () => {
-    const { data, error } = await supabase.from('produtos_doces').select('*').eq('id', 'config_categorias_v9').maybeSingle();
-    if (data && data.categorias) {
-      setCategoriasMap(data.categorias);
-      if (!subFilter || !data.categorias[genderFilter]?.includes(subFilter)) {
-        setSubFilter(data.categorias[genderFilter]?.[0] || '');
+  const fetchConfig = async () => {
+    // Buscar Categorias
+    const { data: catData } = await supabase.from('produtos_doces').select('*').eq('id', 'config_categorias_v9').maybeSingle();
+    if (catData && catData.categorias) {
+      setCategoriasMap(catData.categorias);
+      if (!subFilter || !catData.categorias[genderFilter]?.includes(subFilter)) {
+        setSubFilter(catData.categorias[genderFilter]?.[0] || '');
       }
+    }
+
+    // Buscar Banner
+    const { data: bannerData } = await supabase.from('produtos_doces').select('*').eq('id', 'config_banner_principal').maybeSingle();
+    if (bannerData && bannerData.descricao) {
+      setBackgroundImage(bannerData.descricao);
     }
   };
 
   useEffect(() => {
-    fetchCategorias();
+    fetchConfig();
     fetchData();
 
     const channel = supabase
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos_doces' }, () => {
         fetchData();
-        fetchCategorias();
+        fetchConfig();
       })
       .subscribe();
 
@@ -79,6 +86,64 @@ export default function DocesDaRosaSite() {
       supabase.removeChannel(channel);
     };
   }, [genderFilter]);
+
+  const handleSalvarBanner = async (novaFotoUrl: string) => {
+    setBackgroundImage(novaFotoUrl);
+    const { error } = await supabase.from('produtos_doces').upsert({
+      id: 'config_banner_principal',
+      nome: 'CONFIG_BANNER',
+      genero: 'CONFIG',
+      categoria: 'CONFIG',
+      preco: 0,
+      ativo: true,
+      descricao: novaFotoUrl
+    });
+
+    if (error) {
+      alert("Erro ao salvar banner: " + error.message);
+    } else {
+      alert("Banner atualizado com sucesso!");
+    }
+  };
+
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        handleSalvarBanner(dataUrl);
+      };
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleCriarCategoria = async () => {
     if (!novaCatNome.trim()) return alert("Digite o nome da categoria!");
@@ -101,7 +166,7 @@ export default function DocesDaRosaSite() {
       id: 'config_categorias_v9',
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
-      categoria: 'CONFIG', // 👈 GARANTE QUE A COLUNA NÃO VÁ NULA
+      categoria: 'CONFIG',
       preco: 0,
       ativo: true,
       categorias: novasCategorias
@@ -109,7 +174,7 @@ export default function DocesDaRosaSite() {
 
     if (error) {
       alert("Erro ao salvar categoria: " + error.message);
-      fetchCategorias();
+      fetchConfig();
     }
   };
 
@@ -131,7 +196,7 @@ export default function DocesDaRosaSite() {
       id: 'config_categorias_v9',
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
-      categoria: 'CONFIG', // 👈 GARANTE QUE A COLUNA NÃO VÁ NULA
+      categoria: 'CONFIG',
       preco: 0,
       ativo: true,
       categorias: novasCategorias
@@ -139,7 +204,7 @@ export default function DocesDaRosaSite() {
 
     if (error) {
       alert("Erro ao excluir categoria no banco: " + error.message);
-      fetchCategorias();
+      fetchConfig();
     }
   };
 
@@ -1101,6 +1166,13 @@ export default function DocesDaRosaSite() {
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '2px solid var(--pink-sweet)', paddingBottom: '12px'}}>
           <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.1rem', margin:0, color: 'var(--pink-glow)'}}>{editingId ? 'EDITAR DOCE' : 'ADICIONAR DOCE'}</h2>
           <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'6px', fontWeight: 700}}>FECHAR</button>
+        </div>
+
+        {/* 🖼️ BLOCO PARA TROCAR O BANNER DE FUNDO */}
+        <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
+          <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>🖼️ Foto de Fundo do Banner</h3>
+          <p style={{fontSize: '0.62rem', color: 'var(--text-brown)', marginBottom: '8px'}}>Escolha uma foto da sua galeria para o topo do site:</p>
+          <input type="file" accept="image/*" onChange={handleBannerUpload} style={{width: '100%', background: '#fff', padding: '6px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc'}} />
         </div>
 
         <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
