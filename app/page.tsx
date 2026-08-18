@@ -32,7 +32,6 @@ export default function DocesDaRosaSite() {
   const [novaCatNome, setNovaCatNome] = useState('');
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   
-  // Imagem de banner robusta
   const backgroundImage = 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=1600&q=80';
 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
@@ -102,6 +101,7 @@ export default function DocesDaRosaSite() {
       id: 'config_categorias_v9',
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
+      categoria: 'CONFIG', // 👈 GARANTE QUE A COLUNA NÃO VÁ NULA
       preco: 0,
       ativo: true,
       categorias: novasCategorias
@@ -131,6 +131,7 @@ export default function DocesDaRosaSite() {
       id: 'config_categorias_v9',
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
+      categoria: 'CONFIG', // 👈 GARANTE QUE A COLUNA NÃO VÁ NULA
       preco: 0,
       ativo: true,
       categorias: novasCategorias
