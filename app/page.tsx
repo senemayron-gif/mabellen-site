@@ -32,13 +32,13 @@ export default function DocesDaRosaSite() {
   const [novaCatNome, setNovaCatNome] = useState('');
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   
-  // Imagem de banner robusta (substitui o arquivo local caso dê conflito)
+  // Imagem de banner robusta
   const backgroundImage = 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=1600&q=80';
 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
   const [productForm, setProductForm] = useState<any>({
-    nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], descricao: '', ativo: true
+    nome: '', preco: '', genero: 'DIARIO', categoria: 'bolo no pote', fotos: [], descricao: '', ativo: true
   });
 
   const fetchData = async () => {
@@ -144,7 +144,7 @@ export default function DocesDaRosaSite() {
 
   const resetForm = () => {
     setEditingId(null);
-    const primeiraCatDoGrupo = categoriasMap[productForm.genero]?.[0] || '';
+    const primeiraCatDoGrupo = categoriasMap['DIARIO']?.[0] || 'bolo no pote';
     setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], descricao: '', ativo: true });
   };
 
@@ -287,6 +287,7 @@ export default function DocesDaRosaSite() {
   async function handleSave() {
     const categoriaDefinida = productForm.categoria || categoriasMap[productForm.genero]?.[0] || '';
     if (!productForm.nome.trim()) return alert("Digite o nome do doce!");
+    if (!categoriaDefinida.trim()) return alert("Selecione ou crie uma categoria válida!");
 
     const dadosSalvar = {
       id: editingId ? editingId : Date.now().toString(),
