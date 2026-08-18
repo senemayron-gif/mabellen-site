@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// ⚠️ Insira aqui as suas credenciais do Supabase
+// ⚠️ Credenciais do Supabase
 const SUPABASE_URL = 'https://hhzqgrnuedzabacarjoi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bAaKr5Q5NR576NQSlTOD7w_eA0Beql8';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -32,7 +32,6 @@ export default function DocesDaRosaSite() {
   const [novaCatNome, setNovaCatNome] = useState('');
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   
-  // Banner fixo definitivo direto da pasta public
   const backgroundImage = '/banner.png';
 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
@@ -41,7 +40,6 @@ export default function DocesDaRosaSite() {
     nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], descricao: '', ativo: true
   });
 
-  // Busca segura de produtos isolados
   const fetchData = async () => {
     const { data: prodData, error: prodError } = await supabase.from('produtos_doces').select('*');
     if (!prodError && prodData) {
@@ -55,7 +53,7 @@ export default function DocesDaRosaSite() {
   };
 
   useEffect(() => {
-    const savedCats = localStorage.getItem('doces_categorias_v5');
+    const savedCats = localStorage.getItem('doces_categorias_v6');
     let catsAtuais = categoriasMap;
     if (savedCats) {
       catsAtuais = JSON.parse(savedCats);
@@ -75,7 +73,7 @@ export default function DocesDaRosaSite() {
       })
       .subscribe();
 
-    const savedCart = localStorage.getItem('docesdarosa_cart');
+    const savedCart = localStorage.getItem('docesdarosa_cart_v2');
     if (savedCart) {
       setCart(JSON.parse(savedCart));
     }
@@ -86,7 +84,7 @@ export default function DocesDaRosaSite() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('docesdarosa_cart', JSON.stringify(cart));
+    localStorage.setItem('docesdarosa_cart_v2', JSON.stringify(cart));
   }, [cart]);
 
   const handleCriarCategoria = () => {
@@ -104,13 +102,12 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v5', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v6', JSON.stringify(novasCategorias));
     setNovaCatNome('');
-    alert(`Categoria "${nomeLimpo.toUpperCase()}" criada com sucesso!`);
   };
 
   const handleExcluirCategoria = (grupo: string, catExcluir: string) => {
-    if (!confirm(`Deseja realmente excluir a categoria "${catExcluir.toUpperCase()}"?`)) return;
+    if (!confirm(`Deseja excluir a categoria "${catExcluir.toUpperCase()}"?`)) return;
 
     const novasCategorias = {
       ...categoriasMap,
@@ -118,7 +115,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v5', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v6', JSON.stringify(novasCategorias));
   };
 
   const resetForm = () => {
@@ -204,19 +201,46 @@ export default function DocesDaRosaSite() {
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
   };
 
+  // Função redutora de imagem para evitar travamentos e erros de payload
   const handleLocalImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
     Array.from(files).forEach(file => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
           setProductForm((prev: any) => ({
             ...prev,
-            fotos: [...(prev.fotos || []), reader.result]
+            fotos: [...(prev.fotos || []), dataUrl]
           }));
-        }
+        };
       };
       reader.readAsDataURL(file);
     });
@@ -231,7 +255,6 @@ export default function DocesDaRosaSite() {
 
   async function handleSave() {
     const categoriaDefinida = productForm.categoria || categoriasMap[productForm.genero]?.[0] || '';
-    
     if (!productForm.nome.trim()) return alert("Digite o nome do doce!");
 
     const dadosSalvar = {
@@ -278,15 +301,15 @@ export default function DocesDaRosaSite() {
   );
 
   const cssStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Great+Vibes&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap');
     
     :root { 
       --pink-glow: #ff1493;
       --pink-sweet: #ff4da6;
       --pink-light: #fff0f5;
       --gold-shiny: #ffd700;
-      --bg-gradient: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 50%, #ffd1dc 100%);
-      --text-brown: #5c2c3b;
+      --bg-gradient: linear-gradient(135deg, #fff5f8 0%, #ffeef2 50%, #ffe0e9 100%);
+      --text-brown: #4a202c;
     }
     
     body { 
@@ -304,35 +327,35 @@ export default function DocesDaRosaSite() {
       user-select: none;
       pointer-events: none;
       z-index: 2;
-      animation: fallDown 10s linear infinite;
+      animation: fallDown 12s linear infinite;
     }
 
     @keyframes fallDown {
       0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
-      10% { opacity: 0.8; }
-      90% { opacity: 0.8; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
       100% { transform: translateY(105vh) rotate(360deg) scale(1.2); opacity: 0; }
     }
 
     header { 
-      background: rgba(255, 255, 255, 0.95); 
-      backdrop-filter: blur(10px);
-      padding: 15px 5%; 
+      background: rgba(255, 255, 255, 0.92); 
+      backdrop-filter: blur(12px);
+      padding: 14px 6%; 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      border-bottom: 2px solid var(--pink-sweet); 
+      border-bottom: 2px solid #ffd1dc; 
       position: sticky; 
       top: 0; 
       z-index: 500; 
-      box-shadow: 0 4px 20px rgba(255, 20, 147, 0.1);
+      box-shadow: 0 4px 25px rgba(255, 20, 147, 0.08);
     }
 
     .painel-btn {
       cursor: pointer; 
-      width: 45px;
-      height: 45px;
-      font-size: 1.3rem; 
+      width: 44px;
+      height: 44px;
+      font-size: 1.2rem; 
       display: flex;
       align-items: center;
       justify-content: center;
@@ -340,11 +363,11 @@ export default function DocesDaRosaSite() {
       border: 2px solid var(--gold-shiny);
       border-radius: 50%;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(92, 44, 59, 0.2);
+      box-shadow: 0 4px 12px rgba(74, 32, 44, 0.2);
     }
     .painel-btn:hover {
       background: var(--pink-glow);
-      transform: scale(1.1) rotate(10deg);
+      transform: scale(1.08) rotate(10deg);
     }
     
     .bag-wrapper {
@@ -352,7 +375,7 @@ export default function DocesDaRosaSite() {
       flex-direction: column;
       align-items: center;
       cursor: pointer;
-      gap: 4px;
+      gap: 3px;
     }
 
     .bag-container { 
@@ -360,22 +383,22 @@ export default function DocesDaRosaSite() {
       display: flex; 
       align-items: center; 
       justify-content: center; 
-      width: 45px; 
-      height: 45px; 
+      width: 44px; 
+      height: 44px; 
       background: var(--pink-sweet);
       border-radius: 50%;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       transition: all 0.3s ease;
       border: 2px solid #fff;
-      box-shadow: 0 4px 10px rgba(255, 20, 147, 0.2);
+      box-shadow: 0 4px 12px rgba(255, 20, 147, 0.25);
     }
     .bag-wrapper:hover .bag-container {
-      transform: scale(1.1);
+      transform: scale(1.08);
       background: var(--pink-glow);
     }
 
     .bag-text {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       font-weight: 700;
       color: var(--pink-sweet);
       text-transform: uppercase;
@@ -402,7 +425,7 @@ export default function DocesDaRosaSite() {
     .hero-section { 
       position: relative; 
       width: 100%; 
-      height: 400px; 
+      height: 380px; 
       background-size: cover; 
       background-position: center center; 
       background-repeat: no-repeat;
@@ -413,65 +436,66 @@ export default function DocesDaRosaSite() {
     .hero-overlay { 
       position: absolute; 
       inset: 0; 
-      background: linear-gradient(135deg, rgba(255, 240, 245, 0.85) 0%, rgba(255, 77, 166, 0.5) 100%); 
+      background: linear-gradient(135deg, rgba(255, 240, 245, 0.9) 0%, rgba(255, 77, 166, 0.45) 100%); 
     }
     .hero-content { 
       position: relative; 
       z-index: 10; 
-      max-width: 700px; 
+      max-width: 750px; 
       padding: 20px; 
       text-align: center; 
     }
     
     .hero-title-main { 
       font-family: 'Great Vibes', cursive; 
-      font-size: 5.5rem; 
+      font-size: 5.2rem; 
       color: var(--pink-glow); 
       margin: 0;
       line-height: 1;
-      text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+      text-shadow: 2px 3px 6px rgba(255, 255, 255, 0.9);
     }
     .hero-title-sub { 
       font-family: 'Playfair Display', serif; 
-      font-size: 2.2rem; 
+      font-size: 2.1rem; 
       font-weight: 700; 
       letter-spacing: 2px;
       color: var(--text-brown); 
       text-transform: uppercase;
-      margin-top: -5px;
-      margin-bottom: 12px;
+      margin-top: -4px;
+      margin-bottom: 10px;
     }
     .hero-subtitle { 
-      font-size: 1rem; 
+      font-size: 0.95rem; 
       font-weight: 500;
       color: var(--text-brown);
       margin-bottom: 0; 
-      background: rgba(255, 255, 255, 0.9);
-      padding: 8px 18px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 20px;
       border-radius: 20px;
       display: inline-block;
-      box-shadow: 0 4px 12px rgba(255, 20, 147, 0.08);
+      box-shadow: 0 4px 15px rgba(255, 20, 147, 0.08);
     }
     .hero-badge {
       display: inline-block;
       background: var(--pink-glow);
       color: #fff;
-      padding: 5px 16px;
-      font-size: 0.7rem;
+      padding: 5px 15px;
+      font-size: 0.65rem;
       border-radius: 15px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       font-weight: 700;
       letter-spacing: 1.5px;
       text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(255, 20, 147, 0.2);
     }
 
     .nav-main { 
       display: flex; 
       justify-content: center; 
-      gap: 25px; 
-      padding: 18px 15px; 
-      background: rgba(255, 255, 255, 0.9); 
-      backdrop-filter: blur(5px);
+      gap: 20px; 
+      padding: 16px 15px; 
+      background: rgba(255, 255, 255, 0.92); 
+      backdrop-filter: blur(8px);
       border-bottom: 2px solid var(--pink-light); 
     }
     .nav-main button { 
@@ -481,8 +505,8 @@ export default function DocesDaRosaSite() {
       letter-spacing: 1px; 
       font-weight: 700; 
       font-family: 'Montserrat', sans-serif; 
-      font-size: 0.8rem;
-      color: #a37c88;
+      font-size: 0.78rem;
+      color: #9c6c7c;
       text-transform: uppercase;
       transition: 0.3s;
       padding-bottom: 4px;
@@ -496,15 +520,15 @@ export default function DocesDaRosaSite() {
       display: flex; 
       justify-content: center; 
       gap: 8px; 
-      padding: 15px; 
+      padding: 14px 5%; 
       flex-wrap: wrap; 
-      background: rgba(255, 240, 245, 0.6); 
+      background: rgba(255, 240, 245, 0.7); 
     }
     .sub-btn { 
       background: #fff; 
       border: 1.5px solid #ffd1dc; 
       padding: 6px 16px; 
-      font-size: 0.7rem; 
+      font-size: 0.68rem; 
       font-weight: 700;
       cursor: pointer; 
       color: var(--text-brown); 
@@ -514,20 +538,21 @@ export default function DocesDaRosaSite() {
     }
     .sub-btn:hover {
       border-color: var(--pink-sweet);
+      background: #fff5f8;
     }
     .sub-btn.active { 
       background: var(--pink-sweet); 
       color: #fff; 
       border-color: var(--pink-sweet); 
-      box-shadow: 0 3px 10px rgba(255, 77, 166, 0.3);
+      box-shadow: 0 3px 12px rgba(255, 77, 166, 0.3);
     }
 
     .grid { 
       display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); 
       gap: 30px; 
-      padding: 35px 5%; 
-      max-width: 1200px;
+      padding: 35px 6%; 
+      max-width: 1250px;
       margin: 0 auto;
     }
     
@@ -539,18 +564,18 @@ export default function DocesDaRosaSite() {
       display: flex; 
       flex-direction: column; 
       border-radius: 20px; 
-      box-shadow: 0 8px 20px rgba(255, 77, 166, 0.08);
+      box-shadow: 0 8px 25px rgba(255, 77, 166, 0.08);
       transition: all 0.3s ease;
     }
     .card:hover {
       transform: translateY(-6px);
       border-color: var(--pink-sweet);
-      box-shadow: 0 12px 30px rgba(255, 20, 147, 0.18);
+      box-shadow: 0 14px 35px rgba(255, 20, 147, 0.16);
     }
     
     .img-container { 
       width: 100%; 
-      height: 300px; 
+      height: 280px; 
       background: #fff9fa; 
       position: relative; 
       overflow: hidden;
@@ -575,7 +600,7 @@ export default function DocesDaRosaSite() {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.9);
       color: var(--text-brown);
       border: none;
       width: 32px;
@@ -587,7 +612,7 @@ export default function DocesDaRosaSite() {
       align-items: center;
       justify-content: center;
       z-index: 5;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       transition: 0.2s;
     }
     .slider-btn:hover {
@@ -610,7 +635,7 @@ export default function DocesDaRosaSite() {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.7);
       border: 1px solid rgba(0,0,0,0.2);
     }
     .dot.active-dot {
@@ -620,7 +645,7 @@ export default function DocesDaRosaSite() {
     }
     
     .product-info { 
-      padding: 20px; 
+      padding: 18px; 
       text-align: center; 
       flex-grow: 1; 
       display: flex; 
@@ -630,27 +655,27 @@ export default function DocesDaRosaSite() {
     }
     .product-name { 
       font-family: 'Playfair Display', serif; 
-      font-size: 1.3rem; 
+      font-size: 1.25rem; 
       font-weight: 700; 
       color: var(--text-brown); 
       margin: 0 0 4px 0;
     }
     .product-price { 
-      font-size: 1.35rem; 
+      font-size: 1.3rem; 
       font-weight: 800; 
       color: var(--pink-glow); 
-      margin-bottom: 12px; 
+      margin-bottom: 10px; 
     }
 
     .desc-box {
       border: 1.5px solid #ffd1dc;
-      background: #fff;
+      background: #fff9fa;
       padding: 10px 12px;
       border-radius: 12px;
       font-size: 0.72rem;
       color: var(--text-brown);
       line-height: 1.4;
-      margin-bottom: 15px;
+      margin-bottom: 14px;
       text-align: center;
       font-weight: 500;
     }
@@ -693,8 +718,8 @@ export default function DocesDaRosaSite() {
       background: linear-gradient(135deg, var(--pink-glow) 0%, var(--pink-sweet) 100%);
       color: #fff; 
       border: none; 
-      padding: 14px; 
-      font-size: 0.75rem; 
+      padding: 13px; 
+      font-size: 0.72rem; 
       font-weight: 800; 
       cursor: pointer; 
       text-transform: uppercase; 
@@ -713,16 +738,16 @@ export default function DocesDaRosaSite() {
       right: -100%; 
       top: 0; 
       width: 100%; 
-      max-width: 400px; 
+      max-width: 390px; 
       height: 100%; 
       background: #fff; 
       z-index: 9999; 
-      transition: right 0.35s ease; 
-      padding: 25px; 
+      transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1); 
+      padding: 24px; 
       box-sizing: border-box; 
       overflow-y: auto; 
       border-left: 2px solid var(--pink-sweet);
-      box-shadow: -8px 0 30px rgba(255, 20, 147, 0.1); 
+      box-shadow: -10px 0 35px rgba(255, 20, 147, 0.12); 
     }
     .drawer.open { 
       right: 0; 
@@ -737,7 +762,7 @@ export default function DocesDaRosaSite() {
     }
     .cart-item img { 
       width: 55px; 
-      height: 70px; 
+      height: 65px; 
       object-fit: cover; 
       background: #fff;
       border-radius: 6px; 
@@ -749,19 +774,23 @@ export default function DocesDaRosaSite() {
       background: var(--pink-glow); 
       color: #fff; 
       border: none; 
-      padding: 14px; 
-      font-size: 0.75rem; 
+      padding: 13px; 
+      font-size: 0.72rem; 
       font-weight: 800; 
       cursor: pointer; 
       text-transform: uppercase; 
       border-radius: 10px; 
       letter-spacing: 0.5px;
       box-shadow: 0 4px 12px rgba(255, 20, 147, 0.25);
+      transition: 0.2s;
+    }
+    .primary-btn:hover {
+      opacity: 0.95;
     }
     
     .admin-form label { 
       display: block; 
-      font-size: 0.7rem; 
+      font-size: 0.68rem; 
       font-weight: 700; 
       margin-top: 12px; 
       color: var(--pink-sweet); 
@@ -785,17 +814,21 @@ export default function DocesDaRosaSite() {
       left: 25px; 
       background: var(--pink-glow); 
       color: #fff; 
-      width: 50px; 
-      height: 50px; 
+      width: 52px; 
+      height: 52px; 
       border-radius: 50%; 
-      border: none; 
-      font-size: 24px; 
+      border: 2px solid #fff; 
+      font-size: 26px; 
       cursor: pointer; 
       display: flex; 
       align-items: center; 
       justify-content: center; 
       z-index: 1000; 
-      box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3); 
+      box-shadow: 0 4px 15px rgba(255, 20, 147, 0.35); 
+      transition: 0.3s;
+    }
+    .btn-add-new:hover {
+      transform: scale(1.1);
     }
 
     .whatsapp-float {
@@ -809,13 +842,14 @@ export default function DocesDaRosaSite() {
       border-radius: 50%;
       text-align: center;
       font-size: 26px;
-      box-shadow: 2px 4px 15px rgba(37, 211, 102, 0.35);
+      box-shadow: 2px 4px 18px rgba(37, 211, 102, 0.4);
       z-index: 999;
       display: flex;
       align-items: center;
       justify-content: center;
       text-decoration: none;
       transition: all 0.3s ease;
+      border: 2px solid #fff;
     }
     .whatsapp-float:hover {
       background-color: #128c7e;
@@ -827,12 +861,12 @@ export default function DocesDaRosaSite() {
     <>
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
 
-      <div className="candy-rain" style={{ left: '8%', animationDelay: '0s', animationDuration: '9s', fontSize: '24px' }}>🧁</div>
-      <div className="candy-rain" style={{ left: '22%', animationDelay: '3s', animationDuration: '12s', fontSize: '32px' }}>🍓</div>
-      <div className="candy-rain" style={{ left: '40%', animationDelay: '1.5s', animationDuration: '8s', fontSize: '20px' }}>🍫</div>
-      <div className="candy-rain" style={{ left: '55%', animationDelay: '5s', animationDuration: '14s', fontSize: '28px' }}>🍬</div>
-      <div className="candy-rain" style={{ left: '72%', animationDelay: '2s', animationDuration: '10s', fontSize: '24px' }}>🎂</div>
-      <div className="candy-rain" style={{ left: '88%', animationDelay: '6s', animationDuration: '11s', fontSize: '35px' }}>🍩</div>
+      <div className="candy-rain" style={{ left: '8%', animationDelay: '0s', animationDuration: '10s', fontSize: '24px' }}>🧁</div>
+      <div className="candy-rain" style={{ left: '22%', animationDelay: '3s', animationDuration: '13s', fontSize: '30px' }}>🍓</div>
+      <div className="candy-rain" style={{ left: '42%', animationDelay: '1.5s', animationDuration: '9s', fontSize: '22px' }}>🍫</div>
+      <div className="candy-rain" style={{ left: '58%', animationDelay: '5s', animationDuration: '14s', fontSize: '28px' }}>🍬</div>
+      <div className="candy-rain" style={{ left: '75%', animationDelay: '2s', animationDuration: '11s', fontSize: '25px' }}>🎂</div>
+      <div className="candy-rain" style={{ left: '90%', animationDelay: '6s', animationDuration: '12s', fontSize: '32px' }}>🍩</div>
 
       <header>
         <div 
@@ -867,11 +901,11 @@ export default function DocesDaRosaSite() {
           <span className="hero-badge">🧁 Feitos com Carinho em Maringá</span>
           <h1 className="hero-title-main">Doces</h1>
           <h2 className="hero-title-sub">da Rosa</h2>
-          <p className="hero-subtitle">Doces irresistíveis, feitos com carinho para deixar seu momento ainda mais especial!!</p>
+          <p className="hero-subtitle">Doces irresistíveis, feitos com carinho para deixar seu momento ainda mais especial!</p>
         </div>
       </section>
 
-      {adminOpen && <button className="btn-add-new" onClick={() => { resetForm(); setFormOpen(true); }}>+</button>}
+      {adminOpen && <button className="btn-add-new" onClick={() => { resetForm(); setFormOpen(true); }} title="Adicionar Novo Doce">+</button>}
 
       <nav className="nav-main">
         {Object.keys(categoriasMap).map(g => (
@@ -910,8 +944,8 @@ export default function DocesDaRosaSite() {
             <div key={prod.id} className="card">
               {adminOpen && (
                 <div style={{position:'absolute', zIndex:10, top:'10px', left:'10px', display:'flex', gap:'5px'}}>
-                  <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setFormOpen(true); }} style={{background:'#000', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EDITAR</button>
-                  <button onClick={() => handleDelete(prod.id)} style={{background:'red', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px'}}>EXCLUIR</button>
+                  <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setFormOpen(true); }} style={{background:'#000', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px', fontWeight: 700}}>EDITAR</button>
+                  <button onClick={() => handleDelete(prod.id)} style={{background:'red', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px', fontWeight: 700}}>EXCLUIR</button>
                 </div>
               )}
 
@@ -986,7 +1020,7 @@ export default function DocesDaRosaSite() {
         </div>
 
         {cart.length === 0 ? (
-          <p style={{textAlign:'center', marginTop:'30px', color:'#a37c88', fontSize:'0.75rem'}}>Sua sacola está vazia.</p>
+          <p style={{textAlign:'center', marginTop:'40px', color:'#9c6c7c', fontSize:'0.75rem', fontWeight: 600}}>Sua sacola está vazia.</p>
         ) : (
           <>
             <div style={{marginTop:'12px'}}>
@@ -1033,31 +1067,32 @@ export default function DocesDaRosaSite() {
       <div className={`drawer ${formOpen ? 'open' : ''}`}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '2px solid var(--pink-sweet)', paddingBottom: '12px'}}>
           <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.1rem', margin:0, color: 'var(--pink-glow)'}}>{editingId ? 'EDITAR DOCE' : 'ADICIONAR DOCE'}</h2>
-          <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px', fontWeight: 700}}>FECHAR</button>
+          <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'6px', fontWeight: 700}}>FECHAR</button>
         </div>
 
-        <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '12px', border: '1.5px solid #ffd1dc'}}>
-          <h3 style={{fontSize: '0.75rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>📂 Gerenciar Categorias</h3>
+        <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
+          <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>📂 Gerenciar Categorias</h3>
           
-          <div style={{display: 'flex', gap: '5px', marginTop: '5px'}}>
+          <div style={{display: 'flex', gap: '6px', marginTop: '5px'}}>
             <input 
               type="text" 
               placeholder="Nome da categoria" 
               value={novaCatNome} 
               onChange={e => setNovaCatNome(e.target.value)}
-              style={{flex: 1, padding: '7px', fontSize: '0.7rem', borderRadius: '5px', border: '1.5px solid #ffd1dc', background: '#fff'}}
+              style={{flex: 1, padding: '8px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc', background: '#fff'}}
             />
             <select 
               value={novaCatGrupo} 
               onChange={e => setNovaCatGrupo(e.target.value)}
-              style={{width: '100px', padding: '7px', fontSize: '0.7rem', borderRadius: '5px', border: '1.5px solid #ffd1dc', background: '#fff'}}
+              style={{width: '100px', padding: '8px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc', background: '#fff'}}
             >
               <option value="DIARIO">Hoje</option>
               <option value="ENCOMENDAS">Encomenda</option>
             </select>
             <button 
+              type="button"
               onClick={handleCriarCategoria}
-              style={{background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '0 10px', borderRadius: '5px', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem'}}
+              style={{background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem'}}
             >
               CRIAR
             </button>
@@ -1065,14 +1100,15 @@ export default function DocesDaRosaSite() {
 
           <div style={{marginTop: '10px'}}>
             <p style={{fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-brown)', textTransform: 'uppercase', marginBottom: '5px'}}>Suas Categorias (Toque no ✕ para apagar):</p>
-            <div style={{display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '90px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '5px', border: '1px solid #ffd1dc'}}>
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '90px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '6px', border: '1px solid #ffd1dc'}}>
               {categoriasMap[novaCatGrupo]?.map(cat => (
                 <span 
                   key={cat} 
-                  style={{fontSize: '0.6rem', background: '#ffd1dc', color: 'var(--text-brown)', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700}}
+                  style={{fontSize: '0.6rem', background: '#ffd1dc', color: 'var(--text-brown)', padding: '3px 8px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700}}
                 >
                   {cat.toUpperCase()}
                   <button 
+                    type="button"
                     onClick={() => handleExcluirCategoria(novaCatGrupo, cat)}
                     style={{background: 'none', border: 'none', color: 'var(--pink-glow)', cursor: 'pointer', fontWeight: 900, fontSize: '0.65rem'}}
                   >
@@ -1084,7 +1120,7 @@ export default function DocesDaRosaSite() {
           </div>
         </div>
 
-        <div className="admin-form" style={{marginTop: '12px'}}>
+        <div className="admin-form" style={{marginTop: '14px'}}>
           <label>Nome do Doce</label>
           <input 
             type="text" 
@@ -1122,12 +1158,12 @@ export default function DocesDaRosaSite() {
           <label>Descrição / Ingredientes do Doce</label>
           <textarea 
             rows={3}
-            placeholder="Ex: Brigadeiro de maracujá + brigadeiro tradicional + creme de Ninho..." 
+            placeholder="Ex: Brigadeiro gourmet + creme de Ninho + morangos..." 
             value={productForm.descricao} 
             onChange={e => setProductForm({...productForm, descricao: e.target.value})} 
           />
 
-          <label>Fotos do Doce (Adicione quantas quiser)</label>
+          <label>Fotos do Doce (Adicione da Galeria)</label>
           <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
 
           {productForm.fotos?.length > 0 && (
@@ -1152,12 +1188,13 @@ export default function DocesDaRosaSite() {
             </div>
           )}
 
-          <div style={{display:'flex', gap:'8px', marginTop:'18px'}}>
+          <div style={{display:'flex', gap:'8px', marginTop:'20px'}}>
             <button className="primary-btn" onClick={handleSave}>SALVAR DOCE</button>
             {editingId && (
               <button 
+                type="button"
                 onClick={() => handleDelete()} 
-                style={{background:'red', color:'#fff', border:'none', padding:'10px', borderRadius:'10px', cursor:'pointer', fontWeight:800, fontSize:'0.7rem'}}
+                style={{background:'red', color:'#fff', border:'none', padding:'10px 14px', borderRadius:'10px', cursor:'pointer', fontWeight:800, fontSize:'0.7rem'}}
               >
                 EXCLUIR
               </button>
