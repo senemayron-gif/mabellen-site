@@ -32,8 +32,8 @@ export default function DocesDaRosaSite() {
   const [novaCatNome, setNovaCatNome] = useState('');
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   
-  // Banner volta a ser gerenciado de forma isolada e limpa
-  const [backgroundImage, setBackgroundImage] = useState<string>('https://images.unsplash.com/photo-1511018556340-d16986a1c194?q=80&w=1200');
+  // Banner fixo definitivo direto da pasta public
+  const backgroundImage = '/banner.png';
 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
@@ -41,35 +41,21 @@ export default function DocesDaRosaSite() {
     nome: '', preco: '', genero: 'DIARIO', categoria: '', fotos: [], descricao: '', ativo: true
   });
 
-  // Função para buscar apenas os produtos reais do Supabase
-  const fetchProducts = async () => {
-    const { data, error } = await supabase.from('produtos_doces').select('*');
-    if (error) {
-      console.error('Erro ao buscar dados:', error);
-    } else if (data && data.length > 0) {
-      // Filtra caso tenha ficado algum registro antigo de banner na tabela
-      const listaProdutos = data.filter((item: any) => item.id !== 'config_banner_principal' && item.genero !== 'CONFIG');
-      setProducts(listaProdutos);
-    } else {
-      const padrao = [
-        {
-          id: '1',
-          nome: 'Bolo pote',
-          preco: 13.50,
-          genero: 'DIARIO',
-          categoria: 'bolo no pote',
-          fotos: ['https://images.unsplash.com/photo-1587314168485-3236d6710814?q=80&w=600'],
-          descricao: 'Brigadeiro de maracujá + brigadeiro tradicional + creme de Ninho + ganache de chocolate para finalizar.',
-          ativo: true
-        }
-      ];
-      await supabase.from('produtos_doces').insert(padrao);
-      setProducts(padrao);
+  // Busca segura de produtos isolados
+  const fetchData = async () => {
+    const { data: prodData, error: prodError } = await supabase.from('produtos_doces').select('*');
+    if (!prodError && prodData) {
+      const listaLimpa = prodData.filter((item: any) => 
+        item.id !== 'config_banner_principal' && 
+        item.genero !== 'CONFIG' && 
+        item.nome
+      );
+      setProducts(listaLimpa);
     }
   };
 
   useEffect(() => {
-    const savedCats = localStorage.getItem('doces_categorias_v4');
+    const savedCats = localStorage.getItem('doces_categorias_v5');
     let catsAtuais = categoriasMap;
     if (savedCats) {
       catsAtuais = JSON.parse(savedCats);
@@ -80,23 +66,13 @@ export default function DocesDaRosaSite() {
       setSubFilter(catsAtuais[genderFilter][0]);
     }
 
-    // Carregar banner salvo localmente ou do navegador
-    const savedBg = localStorage.getItem('doces_banner_fundo_v2');
-    if (savedBg) {
-      setBackgroundImage(savedBg);
-    }
-
-    fetchProducts();
+    fetchData();
 
     const channel = supabase
       .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'produtos_doces' },
-        () => {
-          fetchProducts();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos_doces' }, () => {
+        fetchData();
+      })
       .subscribe();
 
     const savedCart = localStorage.getItem('docesdarosa_cart');
@@ -128,7 +104,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v4', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v5', JSON.stringify(novasCategorias));
     setNovaCatNome('');
     alert(`Categoria "${nomeLimpo.toUpperCase()}" criada com sucesso!`);
   };
@@ -142,7 +118,7 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v4', JSON.stringify(novasCategorias));
+    localStorage.setItem('doces_categorias_v5', JSON.stringify(novasCategorias));
   };
 
   const resetForm = () => {
@@ -253,34 +229,19 @@ export default function DocesDaRosaSite() {
     }));
   };
 
-  // Função isolada e segura para alterar o banner
-  const handleBannerBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        const novaImagem = reader.result;
-        setBackgroundImage(novaImagem);
-        localStorage.setItem('doces_banner_fundo_v2', novaImagem);
-        alert("Banner alterado com sucesso!");
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   async function handleSave() {
     const categoriaDefinida = productForm.categoria || categoriasMap[productForm.genero]?.[0] || '';
     
+    if (!productForm.nome.trim()) return alert("Digite o nome do doce!");
+
     const dadosSalvar = {
       id: editingId ? editingId : Date.now().toString(),
-      nome: productForm.nome,
-      preco: Number(productForm.preco),
+      nome: productForm.nome.trim(),
+      preco: Number(productForm.preco) || 0,
       genero: productForm.genero,
       categoria: categoriaDefinida,
-      fotos: productForm.fotos,
-      descricao: productForm.descricao,
+      fotos: productForm.fotos || [],
+      descricao: productForm.descricao || '',
       ativo: true
     };
 
@@ -292,7 +253,7 @@ export default function DocesDaRosaSite() {
       alert("Doce salvo com sucesso!");
       setFormOpen(false);
       resetForm();
-      fetchProducts();
+      fetchData();
     }
   }
 
@@ -308,7 +269,7 @@ export default function DocesDaRosaSite() {
     } else {
       setFormOpen(false);
       resetForm();
-      fetchProducts();
+      fetchData();
     }
   }
 
@@ -1190,9 +1151,6 @@ export default function DocesDaRosaSite() {
               ))}
             </div>
           )}
-
-          <label style={{marginTop: '20px'}}>Alterar Fundo do Banner</label>
-          <input type="file" accept="image/*" onChange={handleBannerBackgroundUpload} />
 
           <div style={{display:'flex', gap:'8px', marginTop:'18px'}}>
             <button className="primary-btn" onClick={handleSave}>SALVAR DOCE</button>
