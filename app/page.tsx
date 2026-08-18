@@ -45,6 +45,7 @@ export default function DocesDaRosaSite() {
     if (!prodError && prodData) {
       const listaLimpa = prodData.filter((item: any) => 
         item.id !== 'config_banner_principal' && 
+        item.id !== 'config_categorias_v9' &&
         item.genero !== 'CONFIG' && 
         item.nome
       );
@@ -52,25 +53,25 @@ export default function DocesDaRosaSite() {
     }
   };
 
+  const fetchCategorias = async () => {
+    const { data } = await supabase.from('produtos_doces').select('*').eq('id', 'config_categorias_v9').single();
+    if (data && data.categorias) {
+      setCategoriasMap(data.categorias);
+      if (!subFilter || !data.categorias[genderFilter]?.includes(subFilter)) {
+        setSubFilter(data.categorias[genderFilter]?.[0] || '');
+      }
+    }
+  };
+
   useEffect(() => {
-    // 💡 Versão atualizada v8 para limpar o cache antigo do celular automaticamente
-    const savedCats = localStorage.getItem('doces_categorias_v8');
-    let catsAtuais = categoriasMap;
-    if (savedCats) {
-      catsAtuais = JSON.parse(savedCats);
-      setCategoriasMap(catsAtuais);
-    }
-
-    if (!subFilter || !catsAtuais[genderFilter]?.includes(subFilter)) {
-      setSubFilter(catsAtuais[genderFilter]?.[0] || '');
-    }
-
+    fetchCategorias();
     fetchData();
 
     const channel = supabase
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos_doces' }, () => {
         fetchData();
+        fetchCategorias();
       })
       .subscribe();
 
@@ -79,26 +80,32 @@ export default function DocesDaRosaSite() {
     };
   }, [genderFilter]);
 
-  const handleCriarCategoria = () => {
+  const handleCriarCategoria = async () => {
     if (!novaCatNome.trim()) return alert("Digite o nome da categoria!");
     const nomeLimpo = novaCatNome.trim().toLowerCase();
     const grupo = novaCatGrupo;
 
-    if (categoriasMap[grupo].includes(nomeLimpo)) {
+    if (categoriasMap[grupo]?.includes(nomeLimpo)) {
       return alert("Essa categoria já existe neste grupo!");
     }
 
     const novasCategorias = {
       ...categoriasMap,
-      [grupo]: [...categoriasMap[grupo], nomeLimpo].sort()
+      [grupo]: [...(categoriasMap[grupo] || []), nomeLimpo].sort()
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v8', JSON.stringify(novasCategorias));
     setNovaCatNome('');
+
+    await supabase.from('produtos_doces').upsert({
+      id: 'config_categorias_v9',
+      nome: 'CONFIG_CATS',
+      genero: 'CONFIG',
+      categorias: novasCategorias
+    });
   };
 
-  const handleExcluirCategoria = (grupo: string, catExcluir: string) => {
+  const handleExcluirCategoria = async (grupo: string, catExcluir: string) => {
     if (!confirm(`Deseja excluir a categoria "${catExcluir.toUpperCase()}"?`)) return;
 
     const novasCategorias = {
@@ -107,12 +114,17 @@ export default function DocesDaRosaSite() {
     };
 
     setCategoriasMap(novasCategorias);
-    localStorage.setItem('doces_categorias_v8', JSON.stringify(novasCategorias));
 
-    // Se a categoria excluída era a que estava selecionada, volta para a primeira disponível
     if (subFilter === catExcluir) {
       setSubFilter(novasCategorias[grupo][0] || '');
     }
+
+    await supabase.from('produtos_doces').upsert({
+      id: 'config_categorias_v9',
+      nome: 'CONFIG_CATS',
+      genero: 'CONFIG',
+      categorias: novasCategorias
+    });
   };
 
   const resetForm = () => {
@@ -1174,7 +1186,7 @@ export default function DocesDaRosaSite() {
             <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginTop:'10px'}}>
               {productForm.fotos.map((f: string, i: number) => (
                 <div key={i} style={{position: 'relative', display: 'inline-block'}}>
-                  <img src={f} alt="" style={{width:'55px', height:'55px', objectFit:'cover', borderRadius:'6px', border: '1px solid #ffd1dc'}} />
+                  <img src={f} alt="" style={{width:'55px', height:'55px', objectFit:'cover', borderRadius:'6px', border: '1.5px solid #ffd1dc'}} />
                   <button 
                     type="button"
                     onClick={() => handleRemoveSinglePhoto(i)}
