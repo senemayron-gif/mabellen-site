@@ -49,10 +49,13 @@ export default function DocesDaRosaSite() {
   const [historicoPedidos, setHistoricoPedidos] = useState<any[]>([]);
   const [abaAdminAtiva, setAbaAdminAtiva] = useState<'produtos' | 'financeiro' | 'agenda'>('produtos');
 
+  // Campos para Lançamento Manual atualizados com Nome e Telefone
+  const [manualCliente, setManualCliente] = useState('');
+  const [manualTelefone, setManualTelefone] = useState('');
   const [manualDesc, setManualDesc] = useState('');
   const [manualValor, setManualValor] = useState('');
   const [manualData, setManualData] = useState('');
-  const [manualDataEntrega, setManualDataEntrega] = useState(''); // Data de entrega para pedido manual
+  const [manualDataEntrega, setManualDataEntrega] = useState('');
 
   useEffect(() => {
     async function solicitarPermissaoENotificacao() {
@@ -328,7 +331,7 @@ export default function DocesDaRosaSite() {
 
     await supabase.from('produtos_doces').upsert({
       id: pedidoId,
-      nome: `Pedido: ${resumoItens}`,
+      nome: `Pedido Site: ${resumoItens}`,
       preco: totalCart,
       genero: 'PEDIDO_REGISTRADO',
       categoria: 'FINANCEIRO',
@@ -356,31 +359,37 @@ export default function DocesDaRosaSite() {
   };
 
   const handleLancarManual = async () => {
+    if (!manualCliente.trim()) return alert("Digite o nome da cliente!");
     if (!manualDesc.trim()) return alert("Digite a descrição do pedido/venda!");
     if (!manualValor || Number(manualValor) <= 0) return alert("Digite um valor válido!");
 
     const pedidoId = Date.now();
     const dataObj = manualData ? new Date(manualData + 'T12:00:00') : new Date();
     
-    // Formata a descrição incluindo a data de entrega se houver
-    let descricaoFinal = 'Lançamento Manual (Fora do site)';
+    // Constrói uma descrição rica incluindo Cliente, Telefone e Data de Entrega
+    let infoExtra = `Cliente: ${manualCliente.trim()}`;
+    if (manualTelefone.trim()) {
+      infoExtra += ` | Tel: ${manualTelefone.trim()}`;
+    }
     if (manualDataEntrega) {
-      descricaoFinal = `Encomenda para: ${manualDataEntrega}`;
+      infoExtra += ` | Encomenda para: ${manualDataEntrega}`;
     }
 
     const { error } = await supabase.from('produtos_doces').upsert({
       id: pedidoId,
-      nome: `Manual: ${manualDesc.trim()}`,
+      nome: `${manualCliente.trim()} - ${manualDesc.trim()}`,
       preco: Number(manualValor),
       genero: 'PEDIDO_REGISTRADO',
       categoria: 'FINANCEIRO',
-      descricao: descricaoFinal,
+      descricao: infoExtra,
       created_at: dataObj.toISOString(),
       ativo: true
     });
 
     if (!error) {
       alert("Venda/Encomenda manual lançada com sucesso!");
+      setManualCliente('');
+      setManualTelefone('');
       setManualDesc('');
       setManualValor('');
       setManualData('');
@@ -502,10 +511,19 @@ export default function DocesDaRosaSite() {
   const listaEncomendasAgenda = historicoPedidos
     .filter(p => p.descricao && p.descricao.includes('Encomenda para:'))
     .map(p => {
-      const matchData = p.descricao.match(/Encomenda para:\s*(.*)/);
-      const dataStr = matchData ? matchData[1] : '';
+      const matchData = p.descricao.match(/Encomenda para:\s*([^|]*)/);
+      const dataStr = matchData ? matchData[1].trim() : '';
+      
+      const matchCliente = p.descricao.match(/Cliente:\s*([^|]*)/);
+      const clienteStr = matchCliente ? matchCliente[1].trim() : (p.nome.includes(' - ') ? p.nome.split(' - ')[0] : 'Cliente');
+
+      const matchTel = p.descricao.match(/Tel:\s*([^|]*)/);
+      const telStr = matchTel ? matchTel[1].trim() : '';
+
       return {
         ...p,
+        clienteStr,
+        telStr,
         dataEntregaStr: dataStr,
         dataEntregaObj: dataStr ? new Date(dataStr) : new Date(p.created_at)
       };
@@ -740,7 +758,7 @@ export default function DocesDaRosaSite() {
             {abaAdminAtiva === 'agenda' ? (
               <div style={{marginTop: '15px'}}>
                 <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '10px'}}>📅 Próximas Encomendas Agendadas</h3>
-                <p style={{fontSize: '0.68rem', color: '#666', marginBottom: '12px'}}>Aqui aparecem automaticamente todas as encomendas feitas pelo site ou lançadas manualmente com data de entrega.</p>
+                <p style={{fontSize: '0.68rem', color: '#666', marginBottom: '12px'}}>Acompanhe abaixo o nome, telefone e o horário de entrega de cada encomenda:</p>
 
                 {listaEncomendasAgenda.length === 0 ? (
                   <div style={{background: 'var(--pink-light)', padding: '20px', borderRadius: '10px', textAlign: 'center', border: '1.5px solid #ffd1dc'}}>
@@ -758,10 +776,16 @@ export default function DocesDaRosaSite() {
                           <span style={{fontSize: '0.72rem', fontWeight: 800, background: 'var(--pink-glow)', color: '#fff', padding: '3px 8px', borderRadius: '6px'}}>🕒 {dataFormatada}</span>
                           <span style={{fontSize: '0.8rem', fontWeight: 900, color: 'var(--pink-glow)'}}>R$ {Number(ped.preco).toFixed(2)}</span>
                         </div>
-                        <p style={{fontSize: '0.75rem', fontWeight: 700, margin: '4px 0'}}>{ped.nome}</p>
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', borderTop: '1px solid #f9f0f2', paddingTop: '6px'}}>
-                          <span style={{fontSize: '0.62rem', color: '#666'}}>{ped.descricao}</span>
-                          <button onClick={() => handleDeletarPedido(ped.id)} style={{background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 700}}>Excluir</button>
+                        <p style={{fontSize: '0.8rem', fontWeight: 800, margin: '6px 0 2px 0', color: 'var(--text-brown)'}}>👤 {ped.clienteStr}</p>
+                        {ped.telStr && (
+                          <p style={{fontSize: '0.72rem', margin: '0 0 6px 0'}}>
+                            📞 <a href={`https://wa.me/55${ped.telStr.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" style={{color: 'var(--pink-glow)', fontWeight: 700, textDecoration: 'underline'}}>{ped.telStr}</a>
+                          </p>
+                        )}
+                        <p style={{fontSize: '0.7rem', color: '#555', margin: '4px 0', background: '#fff', padding: '6px', borderRadius: '4px', border: '1px solid #ffd1dc'}}>📦 {ped.nome}</p>
+                        
+                        <div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '8px', borderTop: '1px solid #f9f0f2', paddingTop: '6px'}}>
+                          <button onClick={() => handleDeletarPedido(ped.id)} style={{background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 700}}>Excluir Encomenda</button>
                         </div>
                       </div>
                     );
@@ -774,8 +798,19 @@ export default function DocesDaRosaSite() {
                 <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '18px'}}>
                   <h4 style={{fontSize: '0.72rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '0 0 8px 0', fontWeight:700}}>➕ Lançar Venda / Encomenda Manual</h4>
                   
-                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Descrição do Doce/Cliente:</label>
-                  <input type="text" placeholder="Ex: Bolo Festa Dona Maria" value={manualDesc} onChange={(e) => setManualDesc(e.target.value)} style={{marginBottom: '8px'}} />
+                  <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+                    <div style={{flex: 2}}>
+                      <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Nome da Cliente:</label>
+                      <input type="text" placeholder="Ex: Dona Maria" value={manualCliente} onChange={(e) => setManualCliente(e.target.value)} />
+                    </div>
+                    <div style={{flex: 1}}>
+                      <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Telefone / WhatsApp:</label>
+                      <input type="text" placeholder="44 99999-9999" value={manualTelefone} onChange={(e) => setManualTelefone(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>O que foi encomendado / vendido:</label>
+                  <input type="text" placeholder="Ex: 1 Bolo de Chocolate com Morango" value={manualDesc} onChange={(e) => setManualDesc(e.target.value)} style={{marginBottom: '8px'}} />
                   
                   <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
                     <div style={{flex: 1}}>
