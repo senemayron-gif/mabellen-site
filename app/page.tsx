@@ -71,17 +71,9 @@ export default function DocesDaRosaSite() {
           });
 
           if (currentToken) {
-            const { data: existente } = await supabase
+            await supabase
               .from("fcm_tokens")
-              .select("id")
-              .eq("token", currentToken)
-              .maybeSingle();
-
-            if (!existente) {
-              await supabase
-                .from("fcm_tokens")
-                .insert([{ token: currentToken }]);
-            }
+              .upsert([{ token: currentToken }], { onConflict: "token" });
           }
         }
       } catch (error) {
