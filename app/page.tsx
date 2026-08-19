@@ -13,7 +13,8 @@ const WHATSAPP_NUM = '554497162755';
 export default function DocesDaRosaSite() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
-  const [adminOpen, setAdminOpen] = useState(false);
+  // ABERTO POR PADRÃO OU ALTERNADO SEM SENHA
+  const [adminOpen, setAdminOpen] = useState(false); 
   const [formOpen, setFormOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false); 
   const [genderFilter, setGenderFilter] = useState('DIARIO'); 
@@ -530,7 +531,8 @@ export default function DocesDaRosaSite() {
     <>
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
       <header>
-        <div className="painel-btn" onClick={() => { const s = prompt('Senha:'); if(s === '2004') setAdminOpen(!adminOpen); }} title="Painel">🧁</div>
+        {/* ALTERADO: Removeu o prompt de senha */}
+        <div className="painel-btn" onClick={() => setAdminOpen(!adminOpen)} title="Painel">🧁</div>
         <div className="bag-wrapper" onClick={() => setCartOpen(true)}>
           <div className="bag-container">👜 {cart.length > 0 && <span className="bag-badge">{cart.reduce((a, b) => a + b.quantidadeEscolhida, 0)}</span>}</div>
           <span className="bag-text">Seus doces</span>
