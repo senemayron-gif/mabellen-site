@@ -214,7 +214,7 @@ export default function DocesDaRosaSite() {
       setSubFilter(novasCategorias[grupo][0] || '');
     }
 
-    await supabase.from('produtos_doces').upsert({
+    const { error } = await supabase.from('produtos_doces').upsert({
       id: 'config_categorias_v9',
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
@@ -223,6 +223,10 @@ export default function DocesDaRosaSite() {
       ativo: true,
       categorias: novasCategorias
     });
+
+    if (error) {
+      alert("Erro ao excluir no banco: " + error.message);
+    }
   };
 
   const resetForm = () => {
