@@ -63,40 +63,29 @@ export default function DocesDaRosaSite() {
         if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
         const permission = await Notification.requestPermission();
-        console.log("Status da permissão:", permission);
-
         if (permission === "granted") {
           const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-          console.log("Service Worker OK:", registration);
-
-          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
-          console.log("VAPID Key presente?", !!vapidKey);
-
           const currentToken = await getToken(messaging, {
-            vapidKey: vapidKey,
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
             serviceWorkerRegistration: registration,
           });
 
-          console.log("Token FCM gerado:", currentToken);
-
           if (currentToken) {
-            const { error: dbError } = await supabase
+            const { data: existente } = await supabase
               .from("fcm_tokens")
-              .upsert([{ token: currentToken }], { onConflict: "token" });
-              
-            if (dbError) {
-              console.error("ERRO AO SALVAR NO SUPABASE:", dbError.message);
-              alert("Erro ao salvar token no banco: " + dbError.message);
-            } else {
-              console.log("Token salvo com sucesso!");
+              .select("id")
+              .eq("token", currentToken)
+              .maybeSingle();
+
+            if (!existente) {
+              await supabase
+                .from("fcm_tokens")
+                .insert([{ token: currentToken }]);
             }
-          } else {
-            console.warn("Nenhum token FCM foi retornado pelo Firebase.");
           }
         }
-      } catch (error: any) {
-        console.error("ERRO DETALHADO NOTIFICAÇÃO:", error);
-        alert("Erro no Push: " + (error.message || error));
+      } catch (error) {
+        console.error("Erro ao configurar notificações:", error);
       }
     }
 
