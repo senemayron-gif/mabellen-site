@@ -47,11 +47,12 @@ export default function DocesDaRosaSite() {
   });
 
   const [historicoPedidos, setHistoricoPedidos] = useState<any[]>([]);
-  const [abaAdminAtiva, setAbaAdminAtiva] = useState<'produtos' | 'financeiro'>('produtos');
+  const [abaAdminAtiva, setAbaAdminAtiva] = useState<'produtos' | 'financeiro' | 'agenda'>('produtos');
 
   const [manualDesc, setManualDesc] = useState('');
   const [manualValor, setManualValor] = useState('');
   const [manualData, setManualData] = useState('');
+  const [manualDataEntrega, setManualDataEntrega] = useState(''); // Data de entrega para pedido manual
 
   useEffect(() => {
     async function solicitarPermissaoENotificacao() {
@@ -360,6 +361,12 @@ export default function DocesDaRosaSite() {
 
     const pedidoId = Date.now();
     const dataObj = manualData ? new Date(manualData + 'T12:00:00') : new Date();
+    
+    // Formata a descrição incluindo a data de entrega se houver
+    let descricaoFinal = 'Lançamento Manual (Fora do site)';
+    if (manualDataEntrega) {
+      descricaoFinal = `Encomenda para: ${manualDataEntrega}`;
+    }
 
     const { error } = await supabase.from('produtos_doces').upsert({
       id: pedidoId,
@@ -367,16 +374,17 @@ export default function DocesDaRosaSite() {
       preco: Number(manualValor),
       genero: 'PEDIDO_REGISTRADO',
       categoria: 'FINANCEIRO',
-      descricao: 'Lançamento Manual (Fora do site)',
+      descricao: descricaoFinal,
       created_at: dataObj.toISOString(),
       ativo: true
     });
 
     if (!error) {
-      alert("Venda manual lançada com sucesso!");
+      alert("Venda/Encomenda manual lançada com sucesso!");
       setManualDesc('');
       setManualValor('');
       setManualData('');
+      setManualDataEntrega('');
       fetchData();
     }
   };
@@ -490,6 +498,20 @@ export default function DocesDaRosaSite() {
     return acc;
   }, {});
 
+  // Extrai todas as encomendas que possuem data de entrega na descrição
+  const listaEncomendasAgenda = historicoPedidos
+    .filter(p => p.descricao && p.descricao.includes('Encomenda para:'))
+    .map(p => {
+      const matchData = p.descricao.match(/Encomenda para:\s*(.*)/);
+      const dataStr = matchData ? matchData[1] : '';
+      return {
+        ...p,
+        dataEntregaStr: dataStr,
+        dataEntregaObj: dataStr ? new Date(dataStr) : new Date(p.created_at)
+      };
+    })
+    .sort((a, b) => a.dataEntregaObj.getTime() - b.dataEntregaObj.getTime());
+
   const filtered = products.filter(p => 
     p.genero === genderFilter && (subFilter === '' || p.categoria === subFilter)
   );
@@ -534,7 +556,7 @@ export default function DocesDaRosaSite() {
     .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--pink-sweet); background: #fff; color: var(--pink-glow); font-weight: 800; cursor: pointer; }
     .qty-value { font-size: 0.85rem; font-weight: 700; color: var(--text-brown); }
     .btn-buy { width: 100%; background: linear-gradient(135deg, var(--pink-glow) 0%, var(--pink-sweet) 100%); color: #fff; border: none; padding: 13px; font-size: 0.72rem; font-weight: 800; cursor: pointer; text-transform: uppercase; border-radius: 12px; }
-    .drawer { position: fixed; right: -100%; top: 0; width: 100%; max-width: 390px; height: 100%; background: #fff; z-index: 9999; transition: right 0.35s ease; padding: 24px; box-sizing: border-box; overflow-y: auto; border-left: 2px solid var(--pink-sweet); }
+    .drawer { position: fixed; right: -100%; top: 0; width: 100%; max-width: 420px; height: 100%; background: #fff; z-index: 9999; transition: right 0.35s ease; padding: 24px; box-sizing: border-box; overflow-y: auto; border-left: 2px solid var(--pink-sweet); }
     .drawer.open { right: 0; }
     .cart-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--pink-light); align-items: center; }
     .cart-item img { width: 55px; height: 65px; object-fit: cover; border-radius: 6px; }
@@ -553,7 +575,7 @@ export default function DocesDaRosaSite() {
           if (isAdminAutenticado) {
             setAdminOpen(true);
           } else {
-            setFormOpen(true); // Abre o modal de senha
+            setFormOpen(true);
           }
         }} title="Painel Administrativo">🧁</div>
         <div className="bag-wrapper" onClick={() => setCartOpen(true)}>
@@ -688,7 +710,7 @@ export default function DocesDaRosaSite() {
 
       <div className={`drawer ${formOpen ? 'open' : ''}`}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '2px solid var(--pink-sweet)', paddingBottom: '12px'}}>
-          <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.1rem', margin:0, color: 'var(--pink-glow)'}}>
+          <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.05rem', margin:0, color: 'var(--pink-glow)'}}>
             {isAdminAutenticado ? 'PAINEL DE ADMINISTRAÇÃO' : '🔐 ACESSO RESTRITO'}
           </h2>
           <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'6px', fontWeight:700}}>FECHAR</button>
@@ -709,29 +731,67 @@ export default function DocesDaRosaSite() {
           </form>
         ) : (
           <>
-            <div style={{display: 'flex', gap: '8px', marginTop: '14px', borderBottom: '1px solid #ffd1dc', paddingBottom: '10px'}}>
-              <button onClick={() => setAbaAdminAtiva('produtos')} style={{flex: 1, background: abaAdminAtiva === 'produtos' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'produtos' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight:700, cursor: 'pointer'}}>🧁 PRODUTOS & BANNER</button>
-              <button onClick={() => setAbaAdminAtiva('financeiro')} style={{flex: 1, background: abaAdminAtiva === 'financeiro' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'financeiro' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight:700, cursor: 'pointer'}}>💰 FINANCEIRO</button>
+            <div style={{display: 'flex', gap: '4px', marginTop: '14px', borderBottom: '1px solid #ffd1dc', paddingBottom: '10px'}}>
+              <button onClick={() => setAbaAdminAtiva('produtos')} style={{flex: 1, background: abaAdminAtiva === 'produtos' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'produtos' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '6px', borderRadius: '6px', fontSize: '0.62rem', fontWeight:700, cursor: 'pointer'}}>🧁 PRODUTOS</button>
+              <button onClick={() => setAbaAdminAtiva('agenda')} style={{flex: 1, background: abaAdminAtiva === 'agenda' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'agenda' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '6px', borderRadius: '6px', fontSize: '0.62rem', fontWeight:700, cursor: 'pointer'}}>📅 AGENDA</button>
+              <button onClick={() => setAbaAdminAtiva('financeiro')} style={{flex: 1, background: abaAdminAtiva === 'financeiro' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'financeiro' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '6px', borderRadius: '6px', fontSize: '0.62rem', fontWeight:700, cursor: 'pointer'}}>💰 FINANCEIRO</button>
             </div>
 
-            {abaAdminAtiva === 'financeiro' ? (
+            {abaAdminAtiva === 'agenda' ? (
               <div style={{marginTop: '15px'}}>
-                <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '10px'}}>📊 Relatório de Faturamento</h3>
+                <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '10px'}}>📅 Próximas Encomendas Agendadas</h3>
+                <p style={{fontSize: '0.68rem', color: '#666', marginBottom: '12px'}}>Aqui aparecem automaticamente todas as encomendas feitas pelo site ou lançadas manualmente com data de entrega.</p>
+
+                {listaEncomendasAgenda.length === 0 ? (
+                  <div style={{background: 'var(--pink-light)', padding: '20px', borderRadius: '10px', textAlign: 'center', border: '1.5px solid #ffd1dc'}}>
+                    <p style={{fontSize: '0.75rem', color: 'var(--text-brown)', fontWeight: 600, margin: 0}}>Nenhuma encomenda agendada no momento! 🎉</p>
+                  </div>
+                ) : (
+                  listaEncomendasAgenda.map((ped) => {
+                    const dataFormatada = !isNaN(ped.dataEntregaObj.getTime()) 
+                      ? ped.dataEntregaObj.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                      : ped.dataEntregaStr;
+
+                    return (
+                      <div key={ped.id} style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '12px'}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px'}}>
+                          <span style={{fontSize: '0.72rem', fontWeight: 800, background: 'var(--pink-glow)', color: '#fff', padding: '3px 8px', borderRadius: '6px'}}>🕒 {dataFormatada}</span>
+                          <span style={{fontSize: '0.8rem', fontWeight: 900, color: 'var(--pink-glow)'}}>R$ {Number(ped.preco).toFixed(2)}</span>
+                        </div>
+                        <p style={{fontSize: '0.75rem', fontWeight: 700, margin: '4px 0'}}>{ped.nome}</p>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', borderTop: '1px solid #f9f0f2', paddingTop: '6px'}}>
+                          <span style={{fontSize: '0.62rem', color: '#666'}}>{ped.descricao}</span>
+                          <button onClick={() => handleDeletarPedido(ped.id)} style={{background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 700}}>Excluir</button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : abaAdminAtiva === 'financeiro' ? (
+              <div style={{marginTop: '15px'}}>
+                <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '10px'}}>📊 Relatório & Venda Manual</h3>
                 <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '18px'}}>
-                  <h4 style={{fontSize: '0.72rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '0 0 8px 0', fontWeight:700}}>➕ Lançar Venda Manual</h4>
-                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Descrição:</label>
-                  <input type="text" placeholder="Ex: Encomenda Dona Maria" value={manualDesc} onChange={(e) => setManualDesc(e.target.value)} style={{marginBottom: '8px'}} />
+                  <h4 style={{fontSize: '0.72rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '0 0 8px 0', fontWeight:700}}>➕ Lançar Venda / Encomenda Manual</h4>
+                  
+                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Descrição do Doce/Cliente:</label>
+                  <input type="text" placeholder="Ex: Bolo Festa Dona Maria" value={manualDesc} onChange={(e) => setManualDesc(e.target.value)} style={{marginBottom: '8px'}} />
+                  
                   <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
                     <div style={{flex: 1}}>
                       <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Valor (R$):</label>
                       <input type="number" step="0.01" placeholder="0.00" value={manualValor} onChange={(e) => setManualValor(e.target.value)} />
                     </div>
                     <div style={{flex: 1}}>
-                      <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Data:</label>
+                      <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Data da Venda:</label>
                       <input type="date" value={manualData} onChange={(e) => setManualData(e.target.value)} />
                     </div>
                   </div>
-                  <button type="button" onClick={handleLancarManual} style={{width: '100%', background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontWeight:800, fontSize: '0.7rem', cursor: 'pointer'}}>ADICIONAR AO FINANCEIRO</button>
+
+                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>📅 Data e Hora de Entrega (Opcional - Vai para a Agenda):</label>
+                  <input type="datetime-local" value={manualDataEntrega} onChange={(e) => setManualDataEntrega(e.target.value)} style={{marginBottom: '10px'}} />
+
+                  <button type="button" onClick={handleLancarManual} style={{width: '100%', background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontWeight:800, fontSize: '0.7rem', cursor: 'pointer'}}>SALVAR NO FINANCEIRO E AGENDA</button>
                 </div>
 
                 {Object.keys(faturamentoPorMes).map((mes) => {
