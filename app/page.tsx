@@ -767,8 +767,6 @@ export default function DocesDaRosaSite() {
               <label>Fotos do Doce</label>
               <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
 
-              {productObrigatórioFotosOuNao()}
-
               {productForm.fotos?.length > 0 && (
                 <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginTop:'10px'}}>
                   {productForm.fotos.map((f: string, i: number) => (
