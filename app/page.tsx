@@ -63,21 +63,40 @@ export default function DocesDaRosaSite() {
         if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
         const permission = await Notification.requestPermission();
+        console.log("Status da permissão:", permission);
+
         if (permission === "granted") {
           const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+          console.log("Service Worker OK:", registration);
+
+          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+          console.log("VAPID Key presente?", !!vapidKey);
+
           const currentToken = await getToken(messaging, {
-            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+            vapidKey: vapidKey,
             serviceWorkerRegistration: registration,
           });
 
+          console.log("Token FCM gerado:", currentToken);
+
           if (currentToken) {
-            await supabase
+            const { error: dbError } = await supabase
               .from("fcm_tokens")
               .upsert([{ token: currentToken }], { onConflict: "token" });
+              
+            if (dbError) {
+              console.error("ERRO AO SALVAR NO SUPABASE:", dbError.message);
+              alert("Erro ao salvar token no banco: " + dbError.message);
+            } else {
+              console.log("Token salvo com sucesso!");
+            }
+          } else {
+            console.warn("Nenhum token FCM foi retornado pelo Firebase.");
           }
         }
-      } catch (error) {
-        console.error("Erro ao configurar notificações:", error);
+      } catch (error: any) {
+        console.error("ERRO DETALHADO NOTIFICAÇÃO:", error);
+        alert("Erro no Push: " + (error.message || error));
       }
     }
 
