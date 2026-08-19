@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { messaging, getToken } from '@/firebase';
 
-const SUPABASE_URL = 'https://hhzqgrnuedzabacarjoi.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_bAaKr5Q5NR576NQSlTOD7w_eA0Beql8';
+const SUPABASE_URL = 'https://sbathmpywhfdevycxkaw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_WRIwUZc0djyssSI5DyJAhg_xHwey4bl';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const WHATSAPP_NUM = '554497162755';
