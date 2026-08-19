@@ -1,23 +1,26 @@
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+import { initializeApp, getApps } from "firebase/app";
+import { getMessaging, getToken as firebaseGetToken } from "firebase/messaging";
 
-firebase.initializeApp({
-  apiKey: "AIzaSyBRSDeWQ74OPndJaGoMPVzaJMW-707x2k8",
-  authDomain: "doces-da-rosa.firebaseapp.com",
-  projectId: "doces-da-rosa",
-  storageBucket: "doces-da-rosa.firebasestorage.app",
-  messagingSenderId: "758761602176",
-  appId: "1:758761602176:web:6df2c1d969441714ee3a65"
-});
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
 
-const messaging = firebase.messaging();
+// Inicializa o Firebase de forma segura para o Next.js
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Mensagem recebida em segundo plano:', payload);
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/icon-192.png'
-  };
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
+// Inicializa o messaging apenas no navegador (client-side)
+let messaging: any = null;
+if (typeof window !== "undefined") {
+  try {
+    messaging = getMessaging(app);
+  } catch (err) {
+    console.error("Erro ao inicializar o Firebase Messaging:", err);
+  }
+}
+
+export { messaging, firebaseGetToken as getToken };
