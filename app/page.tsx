@@ -29,6 +29,7 @@ export default function DocesDaRosaSite() {
   const [modalImage, setModalImage] = useState<string | null>(null);
 
   const [mensagemPush, setMensagemPush] = useState('🧁 Novidade Deliciosa na Doces da Rosa! Confira agora o que preparamos para você.');
+  const [mostrarBannerNotificacao, setMostrarBannerNotificacao] = useState(true);
 
   const [categoriasMap, setCategoriasMap] = useState<Record<string, string[]>>({
     DIARIO: ['bolo no pote', 'copo da felicidade', 'docinhos individuais'],
@@ -57,32 +58,32 @@ export default function DocesDaRosaSite() {
   const [manualData, setManualData] = useState('');
   const [manualDataEntrega, setManualDataEntrega] = useState('');
 
-  useEffect(() => {
-    async function solicitarPermissaoENotificacao() {
-      try {
-        if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+  const ativarNotificacoesPush = async () => {
+    try {
+      if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-          const currentToken = await getToken(messaging, {
-            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-            serviceWorkerRegistration: registration,
-          });
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+        const currentToken = await getToken(messaging, {
+          vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          serviceWorkerRegistration: registration,
+        });
 
-          if (currentToken) {
-            await supabase
-              .from("fcm_tokens")
-              .upsert([{ token: currentToken }], { onConflict: "token" });
-          }
+        if (currentToken) {
+          await supabase
+            .from("fcm_tokens")
+            .upsert([{ token: currentToken }], { onConflict: "token" });
+          alert("Notificações ativadas com sucesso! 🧁");
         }
-      } catch (error) {
-        console.error("Erro ao configurar notificações:", error);
+      } else {
+        alert("Permissão de notificação negada. Você pode ativar depois nas configurações do navegador.");
       }
+    } catch (error) {
+      console.error("Erro ao configurar notificações:", error);
     }
-
-    solicitarPermissaoENotificacao();
-  }, []);
+    setMostrarBannerNotificacao(false);
+  };
 
   const fetchData = async () => {
     const { data: prodData } = await supabase.from('produtos_doces').select('*');
@@ -586,6 +587,23 @@ export default function DocesDaRosaSite() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
+      
+      {mostrarBannerNotificacao && (
+        <div style={{background: 'linear-gradient(135deg, var(--pink-glow), var(--pink-sweet))', color: '#fff', padding: '12px 5%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 15px rgba(255,20,147,0.2)', position: 'relative', zIndex: 600}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+            <span style={{fontSize: '1.4rem'}}>🔔</span>
+            <div>
+              <p style={{fontSize: '0.75rem', fontWeight: 800, margin: 0}}>Ative as notificações!</p>
+              <p style={{fontSize: '0.65rem', margin: '2px 0 0 0', opacity: 0.9}}>Receba avisos de novos doces fresquinhos e encomendas.</p>
+            </div>
+          </div>
+          <div style={{display: 'flex', gap: '8px'}}>
+            <button onClick={ativarNotificacoesPush} style={{background: '#fff', color: 'var(--pink-glow)', border: 'none', padding: '8px 14px', borderRadius: '20px', fontSize: '0.68rem', fontWeight: 800, cursor: 'pointer'}}>ATIVAR</button>
+            <button onClick={() => setMostrarBannerNotificacao(false)} style={{background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.6)', padding: '8px 10px', borderRadius: '20px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer'}}>✕</button>
+          </div>
+        </div>
+      )}
+
       <header>
         <div className="painel-btn" onClick={() => {
           if (isAdminAutenticado) {
