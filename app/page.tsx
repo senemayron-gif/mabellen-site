@@ -9,11 +9,15 @@ const SUPABASE_ANON_KEY = 'sb_publishable_WRIwUZc0djyssSI5DyJAhg_xHwey4bl';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const WHATSAPP_NUM = '554497162755';
+const SENHA_ADMIN = '2004'; // Senha de acesso ao painel
 
 export default function DocesDaRosaSite() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [isAdminAutenticado, setIsAdminAutenticado] = useState(false);
+  const [senhaInput, setSenhaInput] = useState('');
+  
   const [formOpen, setFormOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false); 
   const [genderFilter, setGenderFilter] = useState('DIARIO'); 
@@ -130,6 +134,18 @@ export default function DocesDaRosaSite() {
       supabase.removeChannel(channel);
     };
   }, [genderFilter]);
+
+  const handleLoginAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (senhaInput === SENHA_ADMIN) {
+      setIsAdminAutenticado(true);
+      setAdminOpen(true);
+      setSenhaInput('');
+    } else {
+      alert("Senha incorreta!");
+      setSenhaInput('');
+    }
+  };
 
   const handleSalvarBanner = async (novaFotoUrl: string) => {
     setBackgroundImage(novaFotoUrl);
@@ -533,7 +549,13 @@ export default function DocesDaRosaSite() {
     <>
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
       <header>
-        <div className="painel-btn" onClick={() => setAdminOpen(!adminOpen)} title="Painel">🧁</div>
+        <div className="painel-btn" onClick={() => {
+          if (isAdminAutenticado) {
+            setAdminOpen(true);
+          } else {
+            setFormOpen(true); // Abre o modal de senha
+          }
+        }} title="Painel Administrativo">🧁</div>
         <div className="bag-wrapper" onClick={() => setCartOpen(true)}>
           <div className="bag-container">👜 {cart.length > 0 && <span className="bag-badge">{cart.reduce((a, b) => a + b.quantidadeEscolhida, 0)}</span>}</div>
           <span className="bag-text">Seus doces</span>
@@ -550,7 +572,7 @@ export default function DocesDaRosaSite() {
         </div>
       </section>
 
-      {adminOpen && <button className="btn-add-new" onClick={() => { resetForm(); setFormOpen(true); }}>+</button>}
+      {isAdminAutenticado && <button className="btn-add-new" onClick={() => { resetForm(); setFormOpen(true); }}>+</button>}
 
       <nav className="nav-main">
         {Object.keys(categoriasMap).map(g => (
@@ -576,7 +598,7 @@ export default function DocesDaRosaSite() {
 
           return (
             <div key={prod.id} className="card">
-              {adminOpen && (
+              {isAdminAutenticado && (
                 <div style={{position:'absolute', zIndex:10, top:'10px', left:'10px', display:'flex', gap:'5px'}}>
                   <button onClick={() => { setEditingId(prod.id); setProductForm(prod); setFormOpen(true); }} style={{background:'#000', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px', fontWeight:700}}>EDITAR</button>
                   <button onClick={() => handleDelete(prod.id)} style={{background:'red', color:'#fff', border:'none', padding:'5px 10px', cursor:'pointer', fontSize:'0.6rem', borderRadius:'4px', fontWeight:700}}>EXCLUIR</button>
@@ -666,162 +688,181 @@ export default function DocesDaRosaSite() {
 
       <div className={`drawer ${formOpen ? 'open' : ''}`}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom: '2px solid var(--pink-sweet)', paddingBottom: '12px'}}>
-          <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.1rem', margin:0, color: 'var(--pink-glow)'}}>PAINEL DE ADMINISTRAÇÃO</h2>
+          <h2 style={{fontFamily: 'Playfair Display', fontSize: '1.1rem', margin:0, color: 'var(--pink-glow)'}}>
+            {isAdminAutenticado ? 'PAINEL DE ADMINISTRAÇÃO' : '🔐 ACESSO RESTRITO'}
+          </h2>
           <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'6px', fontWeight:700}}>FECHAR</button>
         </div>
 
-        <div style={{display: 'flex', gap: '8px', marginTop: '14px', borderBottom: '1px solid #ffd1dc', paddingBottom: '10px'}}>
-          <button onClick={() => setAbaAdminAtiva('produtos')} style={{flex: 1, background: abaAdminAtiva === 'produtos' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'produtos' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight:700, cursor: 'pointer'}}>🧁 PRODUTOS & BANNER</button>
-          <button onClick={() => setAbaAdminAtiva('financeiro')} style={{flex: 1, background: abaAdminAtiva === 'financeiro' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'financeiro' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight:700, cursor: 'pointer'}}>💰 FINANCEIRO</button>
-        </div>
-
-        {abaAdminAtiva === 'financeiro' ? (
-          <div style={{marginTop: '15px'}}>
-            <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '10px'}}>📊 Relatório de Faturamento</h3>
-            <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '18px'}}>
-              <h4 style={{fontSize: '0.72rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '0 0 8px 0', fontWeight:700}}>➕ Lançar Venda Manual</h4>
-              <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Descrição:</label>
-              <input type="text" placeholder="Ex: Encomenda Dona Maria" value={manualDesc} onChange={(e) => setManualDesc(e.target.value)} style={{marginBottom: '8px'}} />
-              <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
-                <div style={{flex: 1}}>
-                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Valor (R$):</label>
-                  <input type="number" step="0.01" placeholder="0.00" value={manualValor} onChange={(e) => setManualValor(e.target.value)} />
-                </div>
-                <div style={{flex: 1}}>
-                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Data:</label>
-                  <input type="date" value={manualData} onChange={(e) => setManualData(e.target.value)} />
-                </div>
-              </div>
-              <button type="button" onClick={handleLancarManual} style={{width: '100%', background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontWeight:800, fontSize: '0.7rem', cursor: 'pointer'}}>ADICIONAR AO FINANCEIRO</button>
+        {!isAdminAutenticado ? (
+          <form onSubmit={handleLoginAdmin} style={{marginTop: '30px', textAlign: 'center'}}>
+            <p style={{fontSize: '0.75rem', color: 'var(--text-brown)', marginBottom: '20px', fontWeight: 600}}>Digite a senha para acessar o painel de controle:</p>
+            <input 
+              type="password" 
+              placeholder="Digite a senha..." 
+              value={senhaInput} 
+              onChange={e => setSenhaInput(e.target.value)} 
+              style={{width: '100%', padding: '12px', fontSize: '0.9rem', textAlign: 'center', borderRadius: '8px', border: '1.5px solid #ffd1dc', marginBottom: '15px'}} 
+              autoFocus
+            />
+            <button type="submit" className="primary-btn">ENTRAR NO PAINEL</button>
+          </form>
+        ) : (
+          <>
+            <div style={{display: 'flex', gap: '8px', marginTop: '14px', borderBottom: '1px solid #ffd1dc', paddingBottom: '10px'}}>
+              <button onClick={() => setAbaAdminAtiva('produtos')} style={{flex: 1, background: abaAdminAtiva === 'produtos' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'produtos' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight:700, cursor: 'pointer'}}>🧁 PRODUTOS & BANNER</button>
+              <button onClick={() => setAbaAdminAtiva('financeiro')} style={{flex: 1, background: abaAdminAtiva === 'financeiro' ? 'var(--pink-glow)' : '#fff', color: abaAdminAtiva === 'financeiro' ? '#fff' : 'var(--text-brown)', border: '1.5px solid #ffd1dc', padding: '8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight:700, cursor: 'pointer'}}>💰 FINANCEIRO</button>
             </div>
 
-            {Object.keys(faturamentoPorMes).map((mes) => {
-              const dadosMes = faturamentoPorMes[mes];
-              return (
-                <div key={mes} style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '12px'}}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{fontSize: '0.75rem', fontWeight: 800}}>{mes}</span>
-                    <span style={{fontSize: '0.85rem', fontWeight: 900, color: 'var(--pink-glow)'}}>R$ {dadosMes.total.toFixed(2)}</span>
+            {abaAdminAtiva === 'financeiro' ? (
+              <div style={{marginTop: '15px'}}>
+                <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '10px'}}>📊 Relatório de Faturamento</h3>
+                <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '18px'}}>
+                  <h4 style={{fontSize: '0.72rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '0 0 8px 0', fontWeight:700}}>➕ Lançar Venda Manual</h4>
+                  <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Descrição:</label>
+                  <input type="text" placeholder="Ex: Encomenda Dona Maria" value={manualDesc} onChange={(e) => setManualDesc(e.target.value)} style={{marginBottom: '8px'}} />
+                  <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+                    <div style={{flex: 1}}>
+                      <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Valor (R$):</label>
+                      <input type="number" step="0.01" placeholder="0.00" value={manualValor} onChange={(e) => setManualValor(e.target.value)} />
+                    </div>
+                    <div style={{flex: 1}}>
+                      <label style={{display: 'block', fontSize: '0.65rem', fontWeight:700, marginBottom: '3px'}}>Data:</label>
+                      <input type="date" value={manualData} onChange={(e) => setManualData(e.target.value)} />
+                    </div>
                   </div>
-                  <p style={{fontSize: '0.65rem', color: '#666', margin: '4px 0 8px 0'}}>Total de pedidos: <b>{dadosMes.quantidade}</b></p>
-                  <div style={{maxHeight: '120px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '6px', border: '1.5px solid #ffd1dc'}}>
-                    {dadosMes.pedidos.map((p: any) => (
-                      <div key={p.id} style={{fontSize: '0.62rem', borderBottom: '1px solid #f9f0f2', padding: '4px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <span>{p.nome}</span>
-                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                          <span style={{fontWeight: 700, color: 'var(--pink-glow)'}}>R$ {Number(p.preco).toFixed(2)}</span>
-                          <button onClick={() => handleDeletarPedido(p.id)} style={{background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontWeight: 900}}>✕</button>
-                        </div>
+                  <button type="button" onClick={handleLancarManual} style={{width: '100%', background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontWeight:800, fontSize: '0.7rem', cursor: 'pointer'}}>ADICIONAR AO FINANCEIRO</button>
+                </div>
+
+                {Object.keys(faturamentoPorMes).map((mes) => {
+                  const dadosMes = faturamentoPorMes[mes];
+                  return (
+                    <div key={mes} style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '12px'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <span style={{fontSize: '0.75rem', fontWeight: 800}}>{mes}</span>
+                        <span style={{fontSize: '0.85rem', fontWeight: 900, color: 'var(--pink-glow)'}}>R$ {dadosMes.total.toFixed(2)}</span>
                       </div>
+                      <p style={{fontSize: '0.65rem', color: '#666', margin: '4px 0 8px 0'}}>Total de pedidos: <b>{dadosMes.quantidade}</b></p>
+                      <div style={{maxHeight: '120px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '6px', border: '1.5px solid #ffd1dc'}}>
+                        {dadosMes.pedidos.map((p: any) => (
+                          <div key={p.id} style={{fontSize: '0.62rem', borderBottom: '1px solid #f9f0f2', padding: '4px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <span>{p.nome}</span>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                              <span style={{fontWeight: 700, color: 'var(--pink-glow)'}}>R$ {Number(p.preco).toFixed(2)}</span>
+                              <button onClick={() => handleDeletarPedido(p.id)} style={{background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontWeight: 900}}>✕</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <>
+                <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
+                  <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>🖼️ Foto de Fundo do Banner</h3>
+                  <input type="file" accept="image/*" onChange={handleBannerUpload} style={{width: '100%', background: '#fff', padding: '6px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc'}} />
+                </div>
+
+                <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
+                  <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>📂 Gerenciar Categorias</h3>
+                  <div style={{display: 'flex', gap: '6px', marginTop: '5px'}}>
+                    <input type="text" placeholder="Nome da categoria" value={novaCatNome} onChange={e => setNovaCatNome(e.target.value)} style={{flex: 1}} />
+                    <select value={novaCatGrupo} onChange={e => setNovaCatGrupo(e.target.value)} style={{width: '100px'}}>
+                      <option value="DIARIO">Hoje</option>
+                      <option value="ENCOMENDAS">Encomenda</option>
+                    </select>
+                    <button type="button" onClick={handleCriarCategoria} style={{background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem'}}>CRIAR</button>
+                  </div>
+                  <div style={{display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px', maxHeight: '90px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '6px', border: '1.5px solid #ffd1dc'}}>
+                    {categoriasMap[novaCatGrupo]?.map(cat => (
+                      <span key={cat} style={{fontSize: '0.6rem', background: '#ffd1dc', color: 'var(--text-brown)', padding: '3px 8px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700}}>
+                        {cat.toUpperCase()}
+                        <button type="button" onClick={() => handleExcluirCategoria(novaCatGrupo, cat)} style={{background: 'none', border: 'none', color: 'var(--pink-glow)', cursor: 'pointer', fontWeight: 900}}>✕</button>
+                      </span>
                     ))}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <>
-            <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
-              <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>🖼️ Foto de Fundo do Banner</h3>
-              <input type="file" accept="image/*" onChange={handleBannerUpload} style={{width: '100%', background: '#fff', padding: '6px', fontSize: '0.7rem', borderRadius: '6px', border: '1.5px solid #ffd1dc'}} />
-            </div>
 
-            <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
-              <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>📂 Gerenciar Categorias</h3>
-              <div style={{display: 'flex', gap: '6px', marginTop: '5px'}}>
-                <input type="text" placeholder="Nome da categoria" value={novaCatNome} onChange={e => setNovaCatNome(e.target.value)} style={{flex: 1}} />
-                <select value={novaCatGrupo} onChange={e => setNovaCatGrupo(e.target.value)} style={{width: '100px'}}>
-                  <option value="DIARIO">Hoje</option>
-                  <option value="ENCOMENDAS">Encomenda</option>
-                </select>
-                <button type="button" onClick={handleCriarCategoria} style={{background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem'}}>CRIAR</button>
-              </div>
-              <div style={{display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px', maxHeight: '90px', overflowY: 'auto', background: '#fff', padding: '6px', borderRadius: '6px', border: '1.5px solid #ffd1dc'}}>
-                {categoriasMap[novaCatGrupo]?.map(cat => (
-                  <span key={cat} style={{fontSize: '0.6rem', background: '#ffd1dc', color: 'var(--text-brown)', padding: '3px 8px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700}}>
-                    {cat.toUpperCase()}
-                    <button type="button" onClick={() => handleExcluirCategoria(novaCatGrupo, cat)} style={{background: 'none', border: 'none', color: 'var(--pink-glow)', cursor: 'pointer', fontWeight: 900}}>✕</button>
-                  </span>
-                ))}
-              </div>
-            </div>
+                <div className="admin-form" style={{marginTop: '14px'}}>
+                  <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '15px 0 5px 0'}}>{editingId ? '✏️ Editar Doce' : '➕ Cadastrar Novo Doce'}</h3>
+                  
+                  <label>Nome do Doce</label>
+                  <input type="text" value={productForm.nome} onChange={e => setProductForm({...productForm, nome: e.target.value})} />
 
-            <div className="admin-form" style={{marginTop: '14px'}}>
-              <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '15px 0 5px 0'}}>{editingId ? '✏️ Editar Doce' : '➕ Cadastrar Novo Doce'}</h3>
-              
-              <label>Nome do Doce</label>
-              <input type="text" value={productForm.nome} onChange={e => setProductForm({...productForm, nome: e.target.value})} />
+                  <label>Preço (R$)</label>
+                  <input type="number" step="0.01" value={productForm.preco} onChange={e => setProductForm({...productForm, preco: e.target.value})} />
 
-              <label>Preço (R$)</label>
-              <input type="number" step="0.01" value={productForm.preco} onChange={e => setProductForm({...productForm, preco: e.target.value})} />
+                  <label>Grupo Principal</label>
+                  <select value={productForm.genero} onChange={e => setProductForm({...productForm, genero: e.target.value, categoria: categoriasMap[e.target.value]?.[0] || ''})}>
+                    <option value="DIARIO">Disponíveis Hoje</option>
+                    <option value="ENCOMENDAS">Encomendas Especiais</option>
+                  </select>
 
-              <label>Grupo Principal</label>
-              <select value={productForm.genero} onChange={e => setProductForm({...productForm, genero: e.target.value, categoria: categoriasMap[e.target.value]?.[0] || ''})}>
-                <option value="DIARIO">Disponíveis Hoje</option>
-                <option value="ENCOMENDAS">Encomendas Especiais</option>
-              </select>
+                  <label>Categoria Específica</label>
+                  <select value={productForm.categoria} onChange={e => setProductForm({...productForm, categoria: e.target.value})}>
+                    {categoriasMap[productForm.genero]?.map(cat => (
+                      <option key={cat} value={cat}>{cat.toUpperCase()}</option>
+                    ))}
+                  </select>
 
-              <label>Categoria Específica</label>
-              <select value={productForm.categoria} onChange={e => setProductForm({...productForm, categoria: e.target.value})}>
-                {categoriasMap[productForm.genero]?.map(cat => (
-                  <option key={cat} value={cat}>{cat.toUpperCase()}</option>
-                ))}
-              </select>
+                  <label>Descrição / Ingredientes</label>
+                  <textarea rows={3} value={productForm.descricao} onChange={e => setProductForm({...productForm, descricao: e.target.value})} />
 
-              <label>Descrição / Ingredientes</label>
-              <textarea rows={3} value={productForm.descricao} onChange={e => setProductForm({...productForm, descricao: e.target.value})} />
+                  <label>Fotos do Doce</label>
+                  <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
 
-              <label>Fotos do Doce</label>
-              <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
-
-              {productForm.fotos?.length > 0 && (
-                <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginTop:'10px'}}>
-                  {productForm.fotos.map((f: string, i: number) => (
-                    <div key={i} style={{position: 'relative', display: 'inline-block'}}>
-                      <img src={f} alt="" style={{width:'55px', height:'55px', objectFit:'cover', borderRadius:'6px', border: '1.5px solid #ffd1dc'}} />
-                      <button type="button" onClick={() => handleRemoveSinglePhoto(i)} style={{position: 'absolute', top: '-6px', right: '-6px', background: 'red', color: '#fff', border: 'none', width: '20px', height: '20px', borderRadius: '50%', fontSize: '10px', cursor: 'pointer'}}>✕</button>
+                  {productForm.fotos?.length > 0 && (
+                    <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginTop:'10px'}}>
+                      {productForm.fotos.map((f: string, i: number) => (
+                        <div key={i} style={{position: 'relative', display: 'inline-block'}}>
+                          <img src={f} alt="" style={{width:'55px', height:'55px', objectFit:'cover', borderRadius:'6px', border: '1.5px solid #ffd1dc'}} />
+                          <button type="button" onClick={() => handleRemoveSinglePhoto(i)} style={{position: 'absolute', top: '-6px', right: '-6px', background: 'red', color: '#fff', border: 'none', width: '20px', height: '20px', borderRadius: '50%', fontSize: '10px', cursor: 'pointer'}}>✕</button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+
+                  <div style={{background: 'var(--pink-light)', padding: '10px', borderRadius: '8px', margin: '15px 0', border: '1.5px solid #ffd1dc'}}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
+                      <input type="checkbox" id="chkPush" checked={productForm.enviarNotificacaoPush || false} onChange={e => setProductForm({...productForm, enviarNotificacaoPush: e.target.checked})} style={{width: '18px', height: '18px', cursor: 'pointer'}} />
+                      <label htmlFor="chkPush" style={{margin: 0, fontSize: '0.68rem', cursor: 'pointer', color: 'var(--pink-glow)', fontWeight: 800}}>📢 Enviar notificação push ao salvar</label>
+                    </div>
+                  </div>
+
+                  <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '8px', margin: '15px 0', border: '1.5px solid #ffd1dc'}}>
+                    <label style={{display: 'block', fontSize: '0.68rem', fontWeight: 800, color: 'var(--pink-glow)', marginBottom: '6px'}}>📢 DISPARAR NOTIFICAÇÃO PUSH IMEDIATA</label>
+                    <textarea rows={2} value={mensagemPush} onChange={e => setMensagemPush(e.target.value)} style={{width: '100%', padding: '8px', background: '#fff', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px', marginBottom: '8px'}} />
+                    <button 
+                      type="button" 
+                      onClick={async () => {
+                        if (!confirm("Deseja enviar esta notificação agora para todos os clientes?")) return;
+                        try {
+                          const res = await supabase.functions.invoke('send-push-notification', {
+                            body: { title: "🧁 Doces da Rosa", body: mensagemPush }
+                          });
+                          if (res.error) throw res.error;
+                          alert("Notificação enviada com sucesso!");
+                        } catch (err: any) {
+                          alert("Erro ao enviar notificação: " + (err.message || err));
+                        }
+                      }} 
+                      style={{width: '100%', background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer'}}
+                    >
+                      ENVIAR NOTIFICAÇÃO AGORA
+                    </button>
+                  </div>
+
+                  <div style={{display:'flex', gap:'8px', marginTop:'20px'}}>
+                    <button className="primary-btn" onClick={handleSave}>SALVAR DOCE</button>
+                    {editingId && (
+                      <button type="button" onClick={() => handleDelete()} style={{background:'red', color:'#fff', border:'none', padding:'10px 14px', borderRadius:'10px', cursor:'pointer', fontWeight:800, fontSize:'0.7rem'}}>EXCLUIR</button>
+                    )}
+                  </div>
                 </div>
-              )}
-
-              <div style={{background: 'var(--pink-light)', padding: '10px', borderRadius: '8px', margin: '15px 0', border: '1.5px solid #ffd1dc'}}>
-                <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
-                  <input type="checkbox" id="chkPush" checked={productForm.enviarNotificacaoPush || false} onChange={e => setProductForm({...productForm, enviarNotificacaoPush: e.target.checked})} style={{width: '18px', height: '18px', cursor: 'pointer'}} />
-                  <label htmlFor="chkPush" style={{margin: 0, fontSize: '0.68rem', cursor: 'pointer', color: 'var(--pink-glow)', fontWeight: 800}}>📢 Enviar notificação push ao salvar</label>
-                </div>
-              </div>
-
-              <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '8px', margin: '15px 0', border: '1.5px solid #ffd1dc'}}>
-                <label style={{display: 'block', fontSize: '0.68rem', fontWeight: 800, color: 'var(--pink-glow)', marginBottom: '6px'}}>📢 DISPARAR NOTIFICAÇÃO PUSH IMEDIATA</label>
-                <textarea rows={2} value={mensagemPush} onChange={e => setMensagemPush(e.target.value)} style={{width: '100%', padding: '8px', background: '#fff', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px', marginBottom: '8px'}} />
-                <button 
-                  type="button" 
-                  onClick={async () => {
-                    if (!confirm("Deseja enviar esta notificação agora para todos os clientes?")) return;
-                    try {
-                      const res = await supabase.functions.invoke('send-push-notification', {
-                        body: { title: "🧁 Doces da Rosa", body: mensagemPush }
-                      });
-                      if (res.error) throw res.error;
-                      alert("Notificação enviada com sucesso!");
-                    } catch (err: any) {
-                      alert("Erro ao enviar notificação: " + (err.message || err));
-                    }
-                  }} 
-                  style={{width: '100%', background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer'}}
-                >
-                  ENVIAR NOTIFICAÇÃO AGORA
-                </button>
-              </div>
-
-              <div style={{display:'flex', gap:'8px', marginTop:'20px'}}>
-                <button className="primary-btn" onClick={handleSave}>SALVAR DOCE</button>
-                {editingId && (
-                  <button type="button" onClick={() => handleDelete()} style={{background:'red', color:'#fff', border:'none', padding:'10px 14px', borderRadius:'10px', cursor:'pointer', fontWeight:800, fontSize:'0.7rem'}}>EXCLUIR</button>
-                )}
-              </div>
-            </div>
+              </>
+            )}
           </>
         )}
       </div>
