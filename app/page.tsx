@@ -25,6 +25,9 @@ export default function DocesDaRosaSite() {
   const [currentImageIndex, setCurrentImageIndex] = useState<Record<string, number>>({});
   const [modalImage, setModalImage] = useState<string | null>(null);
 
+  // 📝 Estado para a mensagem customizada do Push
+  const [mensagemPush, setMensagemPush] = useState('🧁 Novidade Deliciosa na Doces da Rosa! Confira agora o que preparamos para você.');
+
   const [categoriasMap, setCategoriasMap] = useState<Record<string, string[]>>({
     DIARIO: ['bolo no pote', 'copo da felicidade', 'docinhos individuais'],
     ENCOMENDAS: ['bolos festivos', 'cento de docinhos', 'tortas inteiras', 'kits presente']
@@ -38,7 +41,7 @@ export default function DocesDaRosaSite() {
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
   const [productForm, setProductForm] = useState<any>({
-    nome: '', preco: '', genero: 'DIARIO', categoria: 'bolo no pote', fotos: [], descricao: '', ativo: true
+    nome: '', preco: '', genero: 'DIARIO', categoria: 'bolo no pote', fotos: [], descricao: '', ativo: true, enviarNotificacaoPush: false
   });
 
   // 💰 Histórico de pedidos salvos para o Financeiro e Lançamento Manual
@@ -268,7 +271,7 @@ export default function DocesDaRosaSite() {
   const resetForm = () => {
     setEditingId(null);
     const primeiraCatDoGrupo = categoriasMap['DIARIO']?.[0] || 'bolo no pote';
-    setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], descricao: '', ativo: true });
+    setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], descricao: '', ativo: true, enviarNotificacaoPush: false });
   };
 
   const changeQty = (prodId: string, delta: number) => {
@@ -485,12 +488,35 @@ export default function DocesDaRosaSite() {
 
     if (error) {
       alert("Erro ao salvar no banco de dados: " + error.message);
+      return;
+    }
+
+    // 🔔 Disparo automático da Notificação Push personalizada
+    if (productForm.enviarNotificacaoPush) {
+      try {
+        const tituloNotif = "🧁 Novidade da Rosa!";
+        
+        const { error: notifError } = await supabase.functions.invoke('send-push-notification', {
+          body: { title: tituloNotif, body: mensagemPush }
+        });
+
+        if (notifError) {
+          console.error("Erro ao disparar notificação:", notifError);
+          alert("Doce salvo, mas houve um erro ao enviar a notificação push.");
+        } else {
+          alert("Doce salvo e notificação disparada com sucesso para os clientes! 🚀");
+        }
+      } catch (err) {
+        console.error("Erro na requisição da notificação:", err);
+        alert("Doce salvo com sucesso!");
+      }
     } else {
       alert("Doce salvo com sucesso!");
-      setFormOpen(false);
-      resetForm();
-      fetchData();
     }
+
+    setFormOpen(false);
+    resetForm();
+    fetchData();
   }
 
   async function handleDelete(id?: string) {
@@ -1523,6 +1549,29 @@ export default function DocesDaRosaSite() {
                   ))}
                 </div>
               )}
+
+              {/* 📢 Bloco de Notificação Push Personalizada */}
+              <div style={{background: 'var(--pink-light)', padding: '10px', borderRadius: '8px', margin: '15px 0', border: '1.5px solid #ffd1dc'}}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
+                  <input 
+                    type="checkbox" 
+                    id="chkPush"
+                    checked={productForm.enviarNotificacaoPush || false}
+                    onChange={e => setProductForm({...productForm, enviarNotificacaoPush: e.target.checked})}
+                    style={{width: '18px', height: '18px', cursor: 'pointer'}}
+                  />
+                  <label htmlFor="chkPush" style={{margin: 0, fontSize: '0.68rem', cursor: 'pointer', color: 'var(--pink-glow)', fontWeight: 800}}>
+                    📢 Enviar notificação push personalizada
+                  </label>
+                </div>
+                <textarea 
+                  rows={2}
+                  placeholder="Escreva aqui a mensagem que será enviada..." 
+                  value={mensagemPush} 
+                  onChange={e => setMensagemPush(e.target.value)}
+                  style={{width: '100%', padding: '8px', background: '#fff', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px'}}
+                />
+              </div>
 
               <div style={{display:'flex', gap:'8px', marginTop:'20px'}}>
                 <button className="primary-btn" onClick={handleSave}>SALVAR DOCE</button>
