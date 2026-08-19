@@ -1,29 +1,13 @@
-'use client';
+[cite: 2]'use client';
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { messaging, getToken } from '@/firebase'; // Ajuste o caminho relativo para o seu arquivo firebase.ts se necessário
 
 // ⚠️ Credenciais do Supabase
 const SUPABASE_URL = 'https://hhzqgrnuedzabacarjoi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bAaKr5Q5NR576NQSlTOD7w_eA0Beql8';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// 🔔 Configurações do Firebase Cloud Messaging (Doces da Rosa)
-const firebaseConfig = {
-  apiKey: "AIzaSyBRSDeWQ74OPndJaGoMPVzaJMW-7O7x2k8",
-  authDomain: "doces-da-rosa.firebaseapp.com",
-  projectId: "doces-da-rosa",
-  storageBucket: "doces-da-rosa.firebasestorage.app",
-  messagingSenderId: "758761602176",
-  appId: "1:758761602176:web:6df2c1d969441714ee3a65",
-  measurementId: "G-XDNFKRJSYG"
-};
-
-const firebaseApp = initializeApp(firebaseConfig);
-const messaging = getMessaging(firebaseApp);
-const VAPID_KEY = 'BIn1iQBcXKFTqTYM6ael1BuVLNJt2JyjkQqOKVdI8fI7RgELX--z8FBBALMDrdPJa89Gr-RrgOXAWfph5SoxRdY';
 
 const WHATSAPP_NUM = '554497162755'; // Maringá/PR
 
@@ -65,22 +49,49 @@ export default function DocesDaRosaSite() {
   const [manualValor, setManualValor] = useState('');
   const [manualData, setManualData] = useState('');
 
-  // 🔔 Função para registrar e salvar o token de notificações Push
-  const solicitarNotificacoes = async () => {
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
-        if (currentToken) {
-          await supabase
-            .from('fcm_tokens')
-            .upsert([{ token: currentToken, created_at: new Date() }], { onConflict: 'token' });
+  // 🔔 Configuração Automática de Notificações Push (Firebase + Supabase)
+  useEffect(() => {
+    async function solicitarPermissaoENotificacao() {
+      try {
+        if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          console.log("Permissão de notificação concedida.");
+
+          const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+          
+          const currentToken = await getToken(messaging, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+            serviceWorkerRegistration: registration,
+          });
+
+          if (currentToken) {
+            console.log("Token FCM obtido:", currentToken);
+
+            // Salvando o token na tabela 'fcm_tokens' do Supabase
+            const { error } = await supabase
+              .from("fcm_tokens")
+              .upsert([{ token: currentToken }], { onConflict: "token" });
+
+            if (error) {
+              console.error("Erro ao salvar token no Supabase:", error);
+            } else {
+              console.log("Token salvo com sucesso no Supabase!");
+            }
+          } else {
+            console.log("Nenhum token disponível. Permissão necessária.");
+          }
+        } else {
+          console.log("Permissão de notificação negada pelo usuário.");
         }
+      } catch (error) {
+        console.error("Erro ao configurar notificações:", error);
       }
-    } catch (error) {
-      console.error("Erro ao registrar notificações push:", error);
     }
-  };
+
+    solicitarPermissaoENotificacao();
+  }, []);
 
   const fetchData = async () => {
     const { data: prodData, error: prodError } = await supabase.from('produtos_doces').select('*');
@@ -119,14 +130,6 @@ export default function DocesDaRosaSite() {
   useEffect(() => {
     fetchConfig();
     fetchData();
-    solicitarNotificacoes();
-
-    // Ouve notificações recebidas em primeiro plano
-    const unsubscribeMessage = onMessage(messaging, (payload) => {
-      if (payload.notification) {
-        alert(`${payload.notification.title}\n${payload.notification.body}`);
-      }
-    });
 
     const channel = supabase
       .channel('schema-db-changes')
@@ -138,7 +141,6 @@ export default function DocesDaRosaSite() {
 
     return () => {
       supabase.removeChannel(channel);
-      if (unsubscribeMessage) unsubscribeMessage();
     };
   }, [genderFilter]);
 
@@ -344,7 +346,6 @@ export default function DocesDaRosaSite() {
     const pedidoId = 'ped_' + Date.now();
     const resumoItens = itensSelecionados.map(i => `${i.quantidadeEscolhida}x ${i.nome}`).join(', ');
 
-    // Salvar pedido no banco para o relatório financeiro
     await supabase.from('produtos_doces').upsert({
       id: pedidoId,
       nome: `Pedido: ${resumoItens}`,
@@ -508,7 +509,6 @@ export default function DocesDaRosaSite() {
     }
   }
 
-  // Agrupamento Financeiro por Mês
   const faturamentoPorMes = historicoPedidos.reduce((acc: any, ped: any) => {
     const dataRef = ped.created_at ? new Date(ped.created_at) : new Date();
     const mesAno = dataRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
@@ -1296,7 +1296,6 @@ export default function DocesDaRosaSite() {
           <button onClick={() => { setFormOpen(false); resetForm(); }} style={{background: 'var(--pink-light)', color: 'var(--pink-glow)', border:'none', padding:'6px 12px', cursor:'pointer', fontSize:'0.65rem', borderRadius:'6px', fontWeight: 700}}>FECHAR</button>
         </div>
 
-        {/* ABAS DO PAINEL */}
         <div style={{display: 'flex', gap: '8px', marginTop: '14px', borderBottom: '1px solid #ffd1dc', paddingBottom: '10px'}}>
           <button 
             onClick={() => setAbaAdminAtiva('produtos')}
@@ -1316,7 +1315,6 @@ export default function DocesDaRosaSite() {
           <div style={{marginTop: '15px'}}>
             <h3 style={{fontSize: '0.8rem', color: 'var(--pink-glow)', textTransform: 'uppercase', marginBottom: '10px'}}>📊 Relatório de Faturamento por Mês</h3>
             
-            {/* LANÇAMENTO MANUAL */}
             <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', border: '1.5px solid #ffd1dc', marginBottom: '18px'}}>
               <h4 style={{fontSize: '0.72rem', color: 'var(--pink-glow)', textTransform: 'uppercase', margin: '0 0 8px 0', fontWeight: 700}}>➕ Lançar Venda Externa / Manual</h4>
               
@@ -1400,7 +1398,6 @@ export default function DocesDaRosaSite() {
           </div>
         ) : (
           <>
-            {/* 🖼️ BLOCO PARA TROCAR O BANNER DE FUNDO */}
             <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '10px', marginTop: '14px', border: '1.5px solid #ffd1dc'}}>
               <h3 style={{fontSize: '0.72rem', margin: '0 0 8px 0', color: 'var(--pink-glow)', fontWeight: 700, textTransform: 'uppercase'}}>🖼️ Foto de Fundo do Banner</h3>
               <p style={{fontSize: '0.62rem', color: 'var(--text-brown)', marginBottom: '8px'}}>Escolha uma foto da sua galeria para o topo do site:</p>
