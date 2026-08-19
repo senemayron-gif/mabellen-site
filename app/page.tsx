@@ -80,8 +80,8 @@ export default function DocesDaRosaSite() {
     const { data: prodData } = await supabase.from('produtos_doces').select('*');
     if (prodData) {
       const listaLimpa = prodData.filter((item: any) => 
-        item.id !== 'config_banner_principal' && 
-        item.id !== 'config_categorias_v9' &&
+        String(item.id) !== '88888888' && 
+        String(item.id) !== '99999999' &&
         item.genero !== 'CONFIG' && 
         item.nome
       );
@@ -95,7 +95,7 @@ export default function DocesDaRosaSite() {
   };
 
   const fetchConfig = async () => {
-    const { data: catData } = await supabase.from('produtos_doces').select('*').eq('id', 'config_categorias_v9').maybeSingle();
+    const { data: catData } = await supabase.from('produtos_doces').select('*').eq('id', 99999999).maybeSingle();
     if (catData && catData.descricao) {
       try {
         const catsParsed = JSON.parse(catData.descricao);
@@ -108,7 +108,7 @@ export default function DocesDaRosaSite() {
       }
     }
 
-    const { data: bannerData } = await supabase.from('produtos_doces').select('*').eq('id', 'config_banner_principal').maybeSingle();
+    const { data: bannerData } = await supabase.from('produtos_doces').select('*').eq('id', 88888888).maybeSingle();
     if (bannerData && bannerData.descricao) {
       setBackgroundImage(bannerData.descricao);
     }
@@ -134,7 +134,7 @@ export default function DocesDaRosaSite() {
   const handleSalvarBanner = async (novaFotoUrl: string) => {
     setBackgroundImage(novaFotoUrl);
     await supabase.from('produtos_doces').upsert({
-      id: 'config_banner_principal',
+      id: 88888888,
       nome: 'CONFIG_BANNER',
       genero: 'CONFIG',
       categoria: 'CONFIG',
@@ -196,7 +196,7 @@ export default function DocesDaRosaSite() {
     setNovaCatNome('');
 
     await supabase.from('produtos_doces').upsert({
-      id: 'config_categorias_v9',
+      id: 99999999,
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
       categoria: 'CONFIG',
@@ -220,7 +220,7 @@ export default function DocesDaRosaSite() {
     }
 
     const { error } = await supabase.from('produtos_doces').upsert({
-      id: 'config_categorias_v9',
+      id: 99999999,
       nome: 'CONFIG_CATS',
       genero: 'CONFIG',
       categoria: 'CONFIG',
@@ -230,7 +230,7 @@ export default function DocesDaRosaSite() {
     });
 
     if (error) {
-      alert("Erro ao excluir no banco: " + error.message);
+      alert("Erro ao salvar categorias no banco: " + error.message);
     }
   };
 
@@ -306,7 +306,7 @@ export default function DocesDaRosaSite() {
     }
 
     const agora = new Date();
-    const pedidoId = 'ped_' + Date.now();
+    const pedidoId = Date.now();
     const resumoItens = itensSelecionados.map(i => `${i.quantidadeEscolhida}x ${i.nome}`).join(', ');
 
     await supabase.from('produtos_doces').upsert({
@@ -342,7 +342,7 @@ export default function DocesDaRosaSite() {
     if (!manualDesc.trim()) return alert("Digite a descrição do pedido/venda!");
     if (!manualValor || Number(manualValor) <= 0) return alert("Digite um valor válido!");
 
-    const pedidoId = 'manual_' + Date.now();
+    const pedidoId = Date.now();
     const dataObj = manualData ? new Date(manualData + 'T12:00:00') : new Date();
 
     const { error } = await supabase.from('produtos_doces').upsert({
@@ -421,7 +421,7 @@ export default function DocesDaRosaSite() {
     if (!productForm.nome.trim()) return alert("Digite o nome do doce!");
 
     const dadosSalvar = {
-      id: editingId ? editingId : Date.now().toString(),
+      id: editingId ? Number(editingId) : Date.now(),
       nome: productForm.nome.trim(),
       preco: Number(productForm.preco) || 0,
       genero: productForm.genero,
@@ -450,7 +450,7 @@ export default function DocesDaRosaSite() {
     fetchData();
   }
 
-  async function handleDelete(id?: string) {
+  async function handleDelete(id?: string | number) {
     const targetId = id || editingId;
     if (!targetId) return;
     if (!confirm("Deseja realmente excluir este doce?")) return;
@@ -482,8 +482,6 @@ export default function DocesDaRosaSite() {
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap');
     :root { --pink-glow: #ff1493; --pink-sweet: #ff4da6; --pink-light: #fff0f5; --gold-shiny: #ffd700; --bg-gradient: linear-gradient(135deg, #fff5f8 0%, #ffeef2 50%, #ffe0e9 100%); --text-brown: #4a202c; }
     body { margin: 0; font-family: 'Montserrat', sans-serif; background: var(--bg-gradient); background-attachment: fixed; color: var(--text-brown); overflow-x: hidden; }
-    .candy-rain { position: fixed; top: -50px; user-select: none; pointer-events: none; z-index: 2; animation: fallDown 12s linear infinite; }
-    @keyframes fallDown { 0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.6; } 100% { transform: translateY(105vh) rotate(360deg) scale(1.2); opacity: 0; } }
     header { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); padding: 14px 6%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ffd1dc; position: sticky; top: 0; z-index: 500; box-shadow: 0 4px 25px rgba(255, 20, 147, 0.08); }
     .painel-btn { cursor: pointer; width: 44px; height: 44px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; background: var(--text-brown); border: 2px solid var(--gold-shiny); border-radius: 50%; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(74, 32, 44, 0.2); }
     .bag-wrapper { display: flex; flex-direction: column; align-items: center; cursor: pointer; gap: 3px; }
