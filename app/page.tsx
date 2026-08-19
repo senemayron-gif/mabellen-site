@@ -781,9 +781,32 @@ export default function DocesDaRosaSite() {
               <div style={{background: 'var(--pink-light)', padding: '10px', borderRadius: '8px', margin: '15px 0', border: '1.5px solid #ffd1dc'}}>
                 <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
                   <input type="checkbox" id="chkPush" checked={productForm.enviarNotificacaoPush || false} onChange={e => setProductForm({...productForm, enviarNotificacaoPush: e.target.checked})} style={{width: '18px', height: '18px', cursor: 'pointer'}} />
-                  <label htmlFor="chkPush" style={{margin: 0, fontSize: '0.68rem', cursor: 'pointer', color: 'var(--pink-glow)', fontWeight: 800}}>📢 Enviar notificação push personalizada</label>
+                  <label htmlFor="chkPush" style={{margin: 0, fontSize: '0.68rem', cursor: 'pointer', color: 'var(--pink-glow)', fontWeight: 800}}>📢 Enviar notificação push ao salvar</label>
                 </div>
-                <textarea rows={2} value={mensagemPush} onChange={e => setMensagemPush(e.target.value)} style={{width: '100%', padding: '8px', background: '#fff', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px'}} />
+              </div>
+
+              {/* CAMPO E BOTÃO DE DISPARO IMEDIATO */}
+              <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '8px', margin: '15px 0', border: '1.5px solid #ffd1dc'}}>
+                <label style={{display: 'block', fontSize: '0.68rem', fontWeight: 800, color: 'var(--pink-glow)', marginBottom: '6px'}}>📢 DISPARAR NOTIFICAÇÃO PUSH IMEDIATA</label>
+                <textarea rows={2} value={mensagemPush} onChange={e => setMensagemPush(e.target.value)} style={{width: '100%', padding: '8px', background: '#fff', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px', marginBottom: '8px'}} />
+                <button 
+                  type="button" 
+                  onClick={async () => {
+                    if (!confirm("Deseja enviar esta notificação agora para todos os clientes?")) return;
+                    try {
+                      const res = await supabase.functions.invoke('send-push-notification', {
+                        body: { title: "🧁 Doces da Rosa", body: mensagemPush }
+                      });
+                      if (res.error) throw res.error;
+                      alert("Notificação enviada com sucesso!");
+                    } catch (err: any) {
+                      alert("Erro ao enviar notificação: " + (err.message || err));
+                    }
+                  }} 
+                  style={{width: '100%', background: 'var(--pink-glow)', color: '#fff', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer'}}
+                >
+                  ENVIAR NOTIFICAÇÃO AGORA
+                </button>
               </div>
 
               <div style={{display:'flex', gap:'8px', marginTop:'20px'}}>
