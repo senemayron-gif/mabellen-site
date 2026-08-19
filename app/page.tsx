@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { messaging, getToken } from '@/firebase';
 
-// ⚠️ Credenciais do Supabase
-const SUPABASE_URL = 'https://hhzqgrnuedzabacarjoi.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_bAaKr5Q5NR576NQSlTOD7w_eA0Beql8';
+// ⚠️ Credenciais do Supabase (Atualizadas com base no segundo código)
+const SUPABASE_URL = 'https://sbathmpywhfdevycxkaw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_WRIwUZc0djyssSI5DyJAhg_xHwey4bl';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const WHATSAPP_NUM = '554497162755'; // Maringá/PR
@@ -24,6 +25,9 @@ export default function DocesDaRosaSite() {
   const [currentImageIndex, setCurrentImageIndex] = useState<Record<string, number>>({});
   const [modalImage, setModalImage] = useState<string | null>(null);
 
+  // Configuração e mensagem de Push Notification
+  const [mensagemPush, setMensagemPush] = useState('🧁 Novidade Deliciosa na Doces da Rosa! Confira agora o que preparamos para você.');
+
   const [categoriasMap, setCategoriasMap] = useState<Record<string, string[]>>({
     DIARIO: ['bolo no pote', 'copo da felicidade', 'docinhos individuais'],
     ENCOMENDAS: ['bolos festivos', 'cento de docinhos', 'tortas inteiras', 'kits presente']
@@ -37,7 +41,7 @@ export default function DocesDaRosaSite() {
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
 
   const [productForm, setProductForm] = useState<any>({
-    nome: '', preco: '', genero: 'DIARIO', categoria: 'bolo no pote', fotos: [], descricao: '', ativo: true
+    nome: '', preco: '', genero: 'DIARIO', categoria: 'bolo no pote', fotos: [], descricao: '', ativo: true, enviarNotificacaoPush: false
   });
 
   // 💰 Histórico de pedidos salvos para o Financeiro e Lançamento Manual
@@ -47,6 +51,34 @@ export default function DocesDaRosaSite() {
   const [manualDesc, setManualDesc] = useState('');
   const [manualValor, setManualValor] = useState('');
   const [manualData, setManualData] = useState('');
+
+  // 🔔 Solicitar permissão e registrar token FCM do Firebase
+  useEffect(() => {
+    async function solicitarPermissaoENotificacao() {
+      try {
+        if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+          const currentToken = await getToken(messaging, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+            serviceWorkerRegistration: registration,
+          });
+
+          if (currentToken) {
+            await supabase
+              .from("fcm_tokens")
+              .upsert([{ token: currentToken }], { onConflict: "token" });
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao configurar notificações:", error);
+      }
+    }
+
+    solicitarPermissaoENotificacao();
+  }, []);
 
   const fetchData = async () => {
     const { data: prodData, error: prodError } = await supabase.from('produtos_doces').select('*');
@@ -223,7 +255,7 @@ export default function DocesDaRosaSite() {
   const resetForm = () => {
     setEditingId(null);
     const primeiraCatDoGrupo = categoriasMap['DIARIO']?.[0] || 'bolo no pote';
-    setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], descricao: '', ativo: true });
+    setProductForm({ nome: '', preco: '', genero: 'DIARIO', categoria: primeiraCatDoGrupo, fotos: [], descricao: '', ativo: true, enviarNotificacaoPush: false });
   };
 
   const changeQty = (prodId: string, delta: number) => {
@@ -440,13 +472,24 @@ export default function DocesDaRosaSite() {
     const { error } = await supabase.from('produtos_doces').upsert(dadosSalvar);
 
     if (error) {
-      alert("Erro ao salvar no banco de dados: " + error.message);
-    } else {
-      alert("Doce salvo com sucesso!");
-      setFormOpen(false);
-      resetForm();
-      fetchData();
+      return alert("Erro ao salvar no banco de dados: " + error.message);
     }
+
+    // Disparar notificação push se a opção estiver marcada
+    if (productForm.enviarNotificacaoPush) {
+      try {
+        await supabase.functions.invoke('send-push-notification', {
+          body: { title: "🧁 Novidade da Rosa!", body: mensagemPush }
+        });
+      } catch (err) {
+        console.error("Erro ao enviar notificação push:", err);
+      }
+    }
+
+    alert("Doce salvo com sucesso!");
+    setFormOpen(false);
+    resetForm();
+    fetchData();
   }
 
   async function handleDelete(id?: string) {
@@ -1458,6 +1501,29 @@ export default function DocesDaRosaSite() {
                 value={productForm.descricao} 
                 onChange={e => setProductForm({...productForm, descricao: e.target.value})} 
               />
+
+              {/* 🔔 Configuração da Notificação Push no Cadastro/Edição */}
+              <div style={{background: 'var(--pink-light)', padding: '10px', borderRadius: '8px', marginTop: '12px', border: '1.5px solid #ffd1dc'}}>
+                <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: 0, color: 'var(--pink-glow)'}}>
+                  <input 
+                    type="checkbox" 
+                    checked={productForm.enviarNotificacaoPush} 
+                    onChange={e => setProductForm({...productForm, enviarNotificacaoPush: e.target.checked})}
+                    style={{width: '16px', height: '16px', margin: 0}}
+                  />
+                  <span>🔔 Enviar Notificação Push aos Clientes</span>
+                </label>
+                {productForm.enviarNotificacaoPush && (
+                  <div style={{marginTop: '8px'}}>
+                    <label style={{fontSize: '0.62rem', color: 'var(--text-brown)', marginTop: 0}}>Texto da Notificação:</label>
+                    <input 
+                      type="text" 
+                      value={mensagemPush} 
+                      onChange={e => setMensagemPush(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
 
               <label>Fotos do Doce (Adicione da Galeria)</label>
               <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} />
