@@ -13,8 +13,7 @@ const WHATSAPP_NUM = '554497162755';
 export default function DocesDaRosaSite() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
-  // ABERTO POR PADRÃO OU ALTERNADO SEM SENHA
-  const [adminOpen, setAdminOpen] = useState(false); 
+  const [adminOpen, setAdminOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false); 
   const [genderFilter, setGenderFilter] = useState('DIARIO'); 
@@ -97,10 +96,15 @@ export default function DocesDaRosaSite() {
 
   const fetchConfig = async () => {
     const { data: catData } = await supabase.from('produtos_doces').select('*').eq('id', 'config_categorias_v9').maybeSingle();
-    if (catData && catData.categorias) {
-      setCategoriasMap(catData.categorias);
-      if (!subFilter || !catData.categorias[genderFilter]?.includes(subFilter)) {
-        setSubFilter(catData.categorias[genderFilter]?.[0] || '');
+    if (catData && catData.descricao) {
+      try {
+        const catsParsed = JSON.parse(catData.descricao);
+        setCategoriasMap(catsParsed);
+        if (!subFilter || !catsParsed[genderFilter]?.includes(subFilter)) {
+          setSubFilter(catsParsed[genderFilter]?.[0] || '');
+        }
+      } catch (e) {
+        console.error("Erro ao ler categorias", e);
       }
     }
 
@@ -198,7 +202,7 @@ export default function DocesDaRosaSite() {
       categoria: 'CONFIG',
       preco: 0,
       ativo: true,
-      categorias: novasCategorias
+      descricao: JSON.stringify(novasCategorias)
     });
   };
 
@@ -222,7 +226,7 @@ export default function DocesDaRosaSite() {
       categoria: 'CONFIG',
       preco: 0,
       ativo: true,
-      categorias: novasCategorias
+      descricao: JSON.stringify(novasCategorias)
     });
 
     if (error) {
@@ -531,7 +535,6 @@ export default function DocesDaRosaSite() {
     <>
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
       <header>
-        {/* ALTERADO: Removeu o prompt de senha */}
         <div className="painel-btn" onClick={() => setAdminOpen(!adminOpen)} title="Painel">🧁</div>
         <div className="bag-wrapper" onClick={() => setCartOpen(true)}>
           <div className="bag-container">👜 {cart.length > 0 && <span className="bag-badge">{cart.reduce((a, b) => a + b.quantidadeEscolhida, 0)}</span>}</div>
