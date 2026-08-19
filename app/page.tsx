@@ -83,7 +83,8 @@ export default function DocesDaRosaSite() {
         item.id !== 'config_banner_principal' && 
         item.id !== 'config_categorias_v9' &&
         item.genero !== 'CONFIG' && 
-        item.nome
+        item.nome &&
+        item.ativo !== false
       );
       setProducts(listaLimpa);
     }
@@ -446,7 +447,7 @@ export default function DocesDaRosaSite() {
     if (!targetId) return;
     if (!confirm("Deseja realmente excluir este doce?")) return;
 
-    await supabase.from('produtos_doces').delete().eq('id', targetId);
+    await supabase.from('produtos_doces').update({ ativo: false }).eq('id', targetId);
     setFormOpen(false);
     resetForm();
     fetchData();
@@ -473,8 +474,6 @@ export default function DocesDaRosaSite() {
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap');
     :root { --pink-glow: #ff1493; --pink-sweet: #ff4da6; --pink-light: #fff0f5; --gold-shiny: #ffd700; --bg-gradient: linear-gradient(135deg, #fff5f8 0%, #ffeef2 50%, #ffe0e9 100%); --text-brown: #4a202c; }
     body { margin: 0; font-family: 'Montserrat', sans-serif; background: var(--bg-gradient); background-attachment: fixed; color: var(--text-brown); overflow-x: hidden; }
-    .candy-rain { position: fixed; top: -50px; user-select: none; pointer-events: none; z-index: 2; animation: fallDown 12s linear infinite; }
-    @keyframes fallDown { 0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.6; } 100% { transform: translateY(105vh) rotate(360deg) scale(1.2); opacity: 0; } }
     header { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); padding: 14px 6%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ffd1dc; position: sticky; top: 0; z-index: 500; box-shadow: 0 4px 25px rgba(255, 20, 147, 0.08); }
     .painel-btn { cursor: pointer; width: 44px; height: 44px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; background: var(--text-brown); border: 2px solid var(--gold-shiny); border-radius: 50%; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(74, 32, 44, 0.2); }
     .bag-wrapper { display: flex; flex-direction: column; align-items: center; cursor: pointer; gap: 3px; }
@@ -785,7 +784,6 @@ export default function DocesDaRosaSite() {
                 </div>
               </div>
 
-              {/* CAMPO E BOTÃO DE DISPARO IMEDIATO */}
               <div style={{background: 'var(--pink-light)', padding: '12px', borderRadius: '8px', margin: '15px 0', border: '1.5px solid #ffd1dc'}}>
                 <label style={{display: 'block', fontSize: '0.68rem', fontWeight: 800, color: 'var(--pink-glow)', marginBottom: '6px'}}>📢 DISPARAR NOTIFICAÇÃO PUSH IMEDIATA</label>
                 <textarea rows={2} value={mensagemPush} onChange={e => setMensagemPush(e.target.value)} style={{width: '100%', padding: '8px', background: '#fff', border: '1.5px solid #ffd1dc', fontSize: '0.7rem', borderRadius: '6px', marginBottom: '8px'}} />
