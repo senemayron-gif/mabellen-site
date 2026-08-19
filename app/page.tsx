@@ -1,4 +1,4 @@
-'use client';
+[cite: 1]'use client';
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
@@ -366,7 +366,6 @@ export default function DocesDaRosaSite() {
     const pedidoId = Date.now();
     const dataObj = manualData ? new Date(manualData + 'T12:00:00') : new Date();
     
-    // Constrói uma descrição rica incluindo Cliente, Telefone e Data de Entrega
     let infoExtra = `Cliente: ${manualCliente.trim()}`;
     if (manualTelefone.trim()) {
       infoExtra += ` | Tel: ${manualTelefone.trim()}`;
@@ -507,7 +506,6 @@ export default function DocesDaRosaSite() {
     return acc;
   }, {});
 
-  // Extrai todas as encomendas que possuem data de entrega na descrição
   const listaEncomendasAgenda = historicoPedidos
     .filter(p => p.descricao && p.descricao.includes('Encomenda para:'))
     .map(p => {
