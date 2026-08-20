@@ -449,7 +449,7 @@ export default function DocesDaRosaSite() {
   };
 
   async function handleSave() {
-    const categoriaDefinida = productForm.categoria || categoriasMap[productForm.genero]?.[0] || '';
+    const categoriaDefinida = (productForm.categoria || categoriasMap[productForm.genero]?.[0] || '').trim().toLowerCase();
     if (!productForm.nome.trim()) return alert("Digite o nome do doce!");
 
     const dadosSalvar = {
@@ -528,9 +528,13 @@ export default function DocesDaRosaSite() {
     })
     .sort((a, b) => a.dataEntregaObj.getTime() - b.dataEntregaObj.getTime());
 
-  const filtered = products.filter(p => 
-    p.genero === genderFilter && (subFilter === '' || p.categoria === subFilter)
-  );
+  const filtered = products.filter(p => {
+    const generoMatch = p.genero === genderFilter;
+    const prodCat = String(p.categoria || '').trim().toLowerCase();
+    const currentSub = String(subFilter || '').trim().toLowerCase();
+    const subMatch = subFilter === '' || prodCat === currentSub;
+    return generoMatch && subMatch;
+  });
 
   const cssStyles = `
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap');
