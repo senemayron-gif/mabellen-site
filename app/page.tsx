@@ -39,7 +39,6 @@ export default function DocesDaRosaSite() {
   const [novaCatNome, setNovaCatNome] = useState('');
   const [novaCatGrupo, setNovaCatGrupo] = useState('DIARIO');
   
-  // Ajustado para evitar o piscar da imagem antiga ao carregar
   const [backgroundImage, setBackgroundImage] = useState('https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=1600&q=80');
 
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
@@ -51,6 +50,7 @@ export default function DocesDaRosaSite() {
   const [historicoPedidos, setHistoricoPedidos] = useState<any[]>([]);
   const [abaAdminAtiva, setAbaAdminAtiva] = useState<'produtos' | 'financeiro' | 'agenda'>('produtos');
 
+  // Campos para Lançamento Manual atualizados com Nome e Telefone
   const [manualCliente, setManualCliente] = useState('');
   const [manualTelefone, setManualTelefone] = useState('');
   const [manualDesc, setManualDesc] = useState('');
